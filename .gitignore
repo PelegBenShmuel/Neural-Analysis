@@ -1,0 +1,12 @@
+# Third-party toolbox, not tracked
+SleepAnalysis/buzcode/
+
+# Claude Code session files
+.claude/
+
+# OS/editor junk
+.DS_Store
+Thumbs.db
+*.swp
+__pycache__/
+*.pyc
