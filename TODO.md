@@ -11,44 +11,51 @@ let status live only in chat.
       before/after-CTA GC comparison. Re-check status periodically; this is the
       single biggest constraint on the project's scope right now.
 
-## Data inventory & organization (MS08 / MS09 / MS11)
+## Data inventory & organization (MS08 / MS09 / MS11 only)
 
-Three animals have completed buzcode sleep-scoring. Reviewed directly on disk
-2026-09-15 (`diskh2` locally, `Z:\Peleg` = `smb://anannas/data/Peleg`, the lab
-share):
+These are the three animals with a **full recording** and completed buzcode
+sleep-scoring — the only ones in active discussion right now. (MS18, MS23, and
+others exist on the lab share too, but are out of scope here: MS18 went through
+a different, non-buzcode pipeline; the rest aren't organized yet.)
 
-| Animal | Session scored | Raw data | Buzcode results | On `Z:\Peleg`? | Plots |
-|---|---|---|---|---|---|
-| MS08 | `hab3toExp`, ~73h (confirmed via video length) | `diskh2/MS08/` (flat, no Raw_Data subfolder) | `diskh2/MS08/MS08_hab3toExp/` only | ❌ raw+meta present at `Z:\Peleg\MS08`, but the buzcode results themselves are **not copied there yet** | ✅ `Z:\Peleg\MS08\MS08_buzcode_analysis` (74 hourly plots) |
-| MS09 | `hab3_ext`, ~73h | `Z:\Peleg\MS09\MS09_Raw_Data\` | `Z:\Peleg\MS09\MS09_Buzaki_results\` | ✅ fully organized | ✅ `Z:\Peleg\MS09\MS09_buzcode_analysis` (73 plots) |
-| MS11 | `hab3` **only** (single day, not hab3-to-extinction) | `Z:\Peleg\MS11\MS11_raw_data\` | `Z:\Peleg\MS11\MS11-buzaki_pipeline_results\` | ✅ organized (naming differs slightly from MS09) | ✅ `Z:\Peleg\MS11\MS11_hab3_buzcode_analysis` |
+Current state on `Z:\Peleg` (`smb://anannas/data/Peleg`), as of 2026-09-15 —
+**all three now follow the same 3-folder pattern** (raw data / buzcode results
+/ analysis plots), though the exact naming still isn't consistent:
+
+| Animal | Session scored | Raw data folder | Buzcode results folder | Plots folder |
+|---|---|---|---|---|
+| MS08 | `hab3toExp`, ~73h (confirmed via video length) | `MS_08_Raw_Data\` | `MS08_Buzaki_results\` | `MS08_buzcode_analysis\` (74 plots) |
+| MS09 | `hab3_ext`, ~73h | `MS09_Raw_Data\` | `MS09_Buzaki_results\` | `MS09_buzcode_analysis\` (73 plots) |
+| MS11 | `hab3` **only** (single day, not hab3-to-extinction) | `MS11_raw_data\` | `MS11-buzaki_pipeline_results\` | `MS11_hab3_buzcode_analysis\` (74 plots) |
 
 Concrete follow-ups:
 
-- [ ] **Copy MS08's buzcode results to `Z:\Peleg\MS08`** — it's the only one of
-      the three not mirrored to the shared drive; everything else (this
-      project's git repo, MS09, MS11) treats `Z:\Peleg` as the canonical place.
-      Suggest `Z:\Peleg\MS08\MS08_Buzaki_results\`, matching MS09's naming.
-- [ ] **Standardize the results-folder naming** across animals — MS09 uses
-      `_Buzaki_results`, MS11 uses `-buzaki_pipeline_results`. Pick one
-      convention going forward (MS09's is cleaner) and use it for MS08 and any
-      new animal.
+- [x] ~~Copy MS08's buzcode results to `Z:\Peleg\MS08`~~ — done 2026-09-15:
+      created `MS08_Buzaki_results\` with all 5 `.mat` files, the `.xml`, and
+      `StateScoreFigures\`, copied from `diskh2`. Also moved MS08's raw files
+      (already sitting flat in the folder) into the pre-existing
+      `MS_08_Raw_Data\`.
+- [ ] **Add a pointer note inside `MS08_Buzaki_results`** — the one thing that
+      didn't copy over was the `.lfp` file itself, because on `diskh2` it's a
+      Unix symlink to the raw `.lf.bin`, and SMB shares can't hold symlinks
+      (`cp: cannot create symbolic link ... Operation not supported`). The raw
+      data it pointed to now lives in `MS_08_Raw_Data\` instead — worth a short
+      text note in `MS08_Buzaki_results\` saying so, so it's not a silent gap.
+- [ ] **Standardize the raw-data/results folder naming** — now three different
+      spellings across three animals: `MS_08_Raw_Data` / `MS09_Raw_Data` /
+      `MS11_raw_data`, and `MS08_Buzaki_results` / `MS09_Buzaki_results` /
+      `MS11-buzaki_pipeline_results`. Pick one convention (MS09's is cleanest)
+      and apply it to all three.
 - [ ] **Reconcile MS11's shorter scored span** — MS11 is only scored for `hab3`
       alone, unlike MS08/MS09's full `hab3toExt`/`hab3_ext`. Check whether
       MS11's raw data for the rest of the protocol exists somewhere and just
-      hasn't been scored, or was never fully recorded (same open question raised
-      by MS24 having only an ~18.5h recording instead of the expected ~72h).
-- [ ] **Codify the real `SleepScoreMaster` invocation** — found the actual
-      working script at `Z:\Peleg\MS11\run_sleep_score.m`:
-      ```matlab
-      addpath(genpath('/media/anan/diskh1/Matlab_packages/buzcode/buzcode-master'));
-      addpath('/home/peleg/matlab_mex');
-      SleepScoreMaster(basePath, 'rejectChannels', [384], ...
-          'SWChannels', [65], 'ThetaChannels', [65], 'noPrompts', true);
-      ```
-      Channel 65 was **manually chosen** for MS11 (not buzcode's auto-detect
-      default) — picking a good SW/Theta channel per animal is a required manual
-      step before scoring a new rat, not something to copy-paste from MS11.
+      hasn't been scored yet, or was never fully recorded.
+- [x] ~~Codify the real `SleepScoreMaster` invocation~~ — done 2026-09-15:
+      copied `Z:\Peleg\MS11\run_sleep_score.m` into
+      `SleepAnalysis/run_sleep_score.m` (git-tracked), with a header noting it's
+      MS11-specific — channel 65 was **manually chosen** for SW/Theta detection
+      (not buzcode's auto-default), so picking a good channel per animal is a
+      required manual step before scoring a new rat.
 - [ ] **Decide the source of truth for the Python scripts** — `MS_buzcode_analysis.py`
       and `VideoMovement.py` exist both in this git repo (`SleepAnalysis/`) and
       at `Z:\Peleg\ImportantScripts\` (which also has `lightsheet_to_tiff.py`,
@@ -109,3 +116,11 @@ Concrete follow-ups:
       `SleepScoreMaster` invocation (`run_sleep_score.m`) and the `.meta`→`.xml`
       generation logic; wrote `SleepAnalysis/generate_buzcode_xml.py`; did a full
       data inventory (see "Data inventory & organization" above) (2026-09-15).
+- [x] Reorganized MS08 on `Z:\Peleg` to match MS09/MS11's raw-data/results/
+      analysis folder pattern — moved raw files into `MS_08_Raw_Data\`, copied
+      buzcode `.mat`/`.xml`/`StateScoreFigures` output into a new
+      `MS08_Buzaki_results\` (2026-09-15).
+- [x] Committed and pushed all of today's changes to `origin/main`
+      (`3d0ee2f..4da55ca`): README.md, TODO.md, Experiment Protocol and
+      Procedure.md, the Articles swap, `generate_buzcode_xml.py`, and
+      `run_sleep_score.m` (2026-09-15).
