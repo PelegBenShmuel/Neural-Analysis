@@ -250,3 +250,37 @@ Concrete follow-ups:
       MS11) switched via an `ANIMAL` variable at the top, instead of a
       `_ms08`-suffixed copy per animal. Applies the same
       no-script-duplication standard used for the Python side (2026-09-17).
+- [x] Built `SleepAnalysis/sleep_char.py` — sleep-bout-duration
+      characterization for a single animal's Training-day cut. Bins sleep
+      bouts (continuous NREM+REM stretches, merged across NREM<->REM
+      transitions) into 0-2min / 2-5min / 5-10min / >10min (the last bin
+      added so no bout is silently dropped from the accounting), and reports
+      what % of the day's *total* sleep time fell in each of the 24 clock
+      hours (a different question from "% of each hour spent asleep,"
+      already covered by the Training-day hypnogram's phase-composition
+      plot). Shares the `ANIMALS` config, not a per-animal copy. Run for MS08
+      (287 sleep bouts, 61% under 2min, sleep concentrated overnight/
+      post-consolidation) and MS09 (237 bouts, similar shape) 2026-09-17.
+      Output saved into each animal's own `<animal>_Training_Day\` folder,
+      alongside the Training-day extraction it reads.
+- [x] **Found and fixed a real corruption bug in the NAS-copy pattern shared
+      by `sleep_char.py` and `training_day_sleep_state_extraction.py`** — the
+      original pattern (`shutil.copyfile` straight to the destination
+      filename, then an immediate `assert` that its size matches) crashing on
+      a mismatch appears to race with the gvfs-SMB mount's async write-flush,
+      and reproducibly left one destination file (`MS08_sleep_char.png`)
+      permanently corrupted server-side, twice in a row — `stat`/`rm`/
+      overwrite all failed with `EINVAL` from this machine, recoverable only
+      by deleting it from a Windows client directly (Peleg did this both
+      times). Root-caused and fixed 2026-09-17: added
+      `copy_to_share_safely()` to `MS_buzcode_analysis.py` (copy to a hidden
+      temp filename, verify size via a short retry loop instead of an
+      instant crash, then an atomic `os.replace` onto the real name) and
+      switched both scripts to use it instead of duplicating the fix.
+      **Unrelated self-inflicted complication during the same incident:**
+      restarting the `gvfsd-smb` process to try to clear the first stuck
+      file (assuming a client-cache issue, which was wrong — it was
+      server-side) dropped this machine's entire `Z:\Peleg` connection until
+      Peleg reconnected it manually. Lesson for next time: ask Peleg to clear
+      a stuck file from a Windows client rather than restarting the SMB
+      connection process again.

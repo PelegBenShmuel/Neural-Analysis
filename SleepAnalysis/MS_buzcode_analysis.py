@@ -19,6 +19,8 @@ before (see plot_full_hypnogram.py's notes).
 """
 import sys
 import os
+import shutil
+import time
 from datetime import datetime, timedelta
 
 import h5py
@@ -117,6 +119,38 @@ MOV_FPS = 25
 STATE_Y   = {1: 2,         3: 0,         5: 1}
 STATE_COL = {1: '#e06c3a', 3: '#4a90d9', 5: '#5cb85c'}
 STATE_LBL = {1: 'WAKE',   3: 'NREM',    5: 'REM'}
+
+
+def copy_to_share_safely(local_path, nas_dir):
+    """Copy local_path onto the gvfs-SMB share via a hidden temp name, then
+    an atomic rename onto the real filename -- never writes the final
+    filename's content directly.
+
+    Why: copying straight to the destination filename and asserting
+    `size matches` immediately after `shutil.copyfile` can crash the process
+    (on a mismatch) right as the gvfs-SMB mount is still flushing the write.
+    That reproducibly left one destination file (MS08_sleep_char.png)
+    permanently corrupted server-side -- stat/rm/overwrite all failing with
+    EINVAL, recoverable only by deleting it from a Windows client directly --
+    twice in a row, 2026-09-17. Verifying via a retry loop instead of an
+    instant crash, and only ever writing full content to a throwaway temp
+    name, avoids repeating that failure mode against the real filename.
+    """
+    dest = os.path.join(nas_dir, os.path.basename(local_path))
+    tmp_dest = os.path.join(nas_dir, f'.tmp_{os.path.basename(local_path)}')
+    shutil.copyfile(local_path, tmp_dest)
+
+    local_size = os.path.getsize(local_path)
+    for attempt in range(5):
+        if os.path.getsize(tmp_dest) == local_size:
+            break
+        time.sleep(0.5)
+    else:
+        print(f'  [WARNING] {tmp_dest} did not match {local_path}\'s size after '
+              f'retries -- leaving it in place rather than renaming over {dest}.')
+        return
+
+    os.replace(tmp_dest, dest)
 
 
 def main():

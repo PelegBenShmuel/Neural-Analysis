@@ -36,7 +36,6 @@ belong on the share, not just scratchpad.
 import sys
 import os
 import csv
-import shutil
 from datetime import timedelta
 
 import h5py
@@ -49,7 +48,7 @@ import matplotlib.patches as mpatches
 import matplotlib.lines as mpl_lines
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from MS_buzcode_analysis import ANIMALS, TASTE_COLORS, STATE_COL, STATE_LBL
+from MS_buzcode_analysis import ANIMALS, TASTE_COLORS, STATE_COL, STATE_LBL, copy_to_share_safely
 
 STATE_CODE = {'WAKE': 1, 'NREM': 3, 'REM': 5}
 
@@ -305,12 +304,7 @@ def main():
     nas_dir = os.path.join(os.path.dirname(cfg['out_dir']), f'{animal}_Training_Day')
     os.makedirs(nas_dir, exist_ok=True)
     for local_path in (mat_path, csv_path, png_path):
-        dest = os.path.join(nas_dir, os.path.basename(local_path))
-        # plain copyfile, not copy2/copystat -- the gvfs-SMB mount doesn't
-        # support chmod (same class of limitation as its no-symlinks issue,
-        # see TODO.md's MS08_Buzaki_results note), so preserving metadata fails.
-        shutil.copyfile(local_path, dest)
-        assert os.path.getsize(dest) == os.path.getsize(local_path), f'size mismatch copying {local_path}'
+        copy_to_share_safely(local_path, nas_dir)
     print(f'\nCopied to the share -> {nas_dir}')
 
 
