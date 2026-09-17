@@ -10,6 +10,25 @@ let status live only in chat.
       currently unavailable per Anan Moran. Unblocks: any within-unit
       before/after-CTA GC comparison. Re-check status periodically; this is the
       single biggest constraint on the project's scope right now.
+- [ ] **MS11 theta-channel rescore (channel 81) not yet applied — blocked on
+      slow NAS read.** `find_theta_channel.m` found channel 81 is MS11's best
+      theta channel (channel 65 ranks 262nd of 384), same class of fix as
+      MS08. But MS11's raw `.lf.bin` is gone from local disk (`diskh2`) —
+      only the 506GB copy on `Z:\Peleg\MS11\MS_11_Raw_Data\` remains, so the
+      `.lfp` symlink was repointed there for the rescore. Reading just 2
+      channels across the full 73h that way took **>90 minutes without even
+      finishing the initial LFP load** (SMB + the raw file's per-channel-
+      interleaved layout means every read is scattered, not sequential) —
+      killed 2026-09-17 rather than left running indefinitely. MS11 is back
+      on its original channel 65 (verified data intact after the kill: still
+      the June 24 files, `SleepScoreLFP.LFP.mat` restored from backup after
+      also getting wiped by the aborted attempt).
+      **Next assignment:** either (a) copy the 506GB raw file back to local
+      `diskh2` first (~1.2TB free there as of 2026-09-17, so it fits) and
+      rescore at local-NVMe speed like MS08/MS09, or (b) just retry over SMB
+      with more patience/a longer timeout. Once rescored, also re-run
+      `sleep_sanity_check.py MS11` and check for the same movement/EMG-
+      artifact signature MS09's channel 295 showed before trusting it.
 
 ## Data inventory & organization (MS08 / MS09 / MS11 only)
 
@@ -18,15 +37,22 @@ sleep-scoring — the only ones in active discussion right now. (MS18, MS23, and
 others exist on the lab share too, but are out of scope here: MS18 went through
 a different, non-buzcode pipeline; the rest aren't organized yet.)
 
-Current state on `Z:\Peleg` (`smb://anannas/data/Peleg`), as of 2026-09-15 —
-**all three now follow the same 3-folder pattern** (raw data / buzcode results
-/ analysis plots), though the exact naming still isn't consistent:
+**Standing process (2026-09-17):** data-completeness/organization work is not
+MS08-only by default. When a gap like the ones below gets fixed for one
+animal (a stale `Z:\Peleg` copy, missing spike-sorted data, a new per-animal
+analysis script/output), add a matching follow-up item for MS09 and MS11 (and
+future animals) here rather than treating the MS08 fix as the end of it —
+see the two "not yet checked" items below for the current instances of this.
+
+Current state on `Z:\Peleg` (`smb://anannas/data/Peleg`), as of 2026-09-16 —
+**all three now follow the exact same 3-folder pattern and naming**
+(`MS_<NN>_Raw_Data` / `MS<NN>_Buzaki_results` / `MS<NN>_buzcode_analysis`):
 
 | Animal | Session scored | Raw data folder | Buzcode results folder | Plots folder |
 |---|---|---|---|---|
 | MS08 | `hab3toExp`, ~73h (confirmed via video length) | `MS_08_Raw_Data\` | `MS08_Buzaki_results\` | `MS08_buzcode_analysis\` (74 plots) |
-| MS09 | `hab3_ext`, ~73h | `MS09_Raw_Data\` | `MS09_Buzaki_results\` | `MS09_buzcode_analysis\` (73 plots) |
-| MS11 | `hab3` **only** (single day, not hab3-to-extinction) | `MS11_raw_data\` | `MS11-buzaki_pipeline_results\` | `MS11_hab3_buzcode_analysis\` (74 plots) |
+| MS09 | `hab3_ext`, ~73h | `MS_09_Raw_Data\` | `MS09_Buzaki_results\` | `MS09_buzcode_analysis\` (73 plots) |
+| MS11 | `hab3` **only** (single day, not hab3-to-extinction) | `MS_11_Raw_Data\` | `MS11_Buzaki_results\` | `MS11_buzcode_analysis\` (74 plots) |
 
 Concrete follow-ups:
 
@@ -41,26 +67,71 @@ Concrete follow-ups:
       (`cp: cannot create symbolic link ... Operation not supported`). The raw
       data it pointed to now lives in `MS_08_Raw_Data\` instead — worth a short
       text note in `MS08_Buzaki_results\` saying so, so it's not a silent gap.
-- [ ] **Standardize the raw-data/results folder naming** — now three different
-      spellings across three animals: `MS_08_Raw_Data` / `MS09_Raw_Data` /
-      `MS11_raw_data`, and `MS08_Buzaki_results` / `MS09_Buzaki_results` /
-      `MS11-buzaki_pipeline_results`. Pick one convention (MS09's is cleanest)
-      and apply it to all three.
+- [x] ~~Standardize the raw-data/results folder naming~~ — done 2026-09-16:
+      renamed `MS09_Raw_Data`→`MS_09_Raw_Data`, `MS11_raw_data`→`MS_11_Raw_Data`,
+      `MS11-buzaki_pipeline_results`→`MS11_Buzaki_results`, and
+      `MS11_hab3_buzcode_analysis`→`MS11_buzcode_analysis`, matching MS08's
+      pattern exactly. As a direct consequence, fixed 6 now-stale hardcoded
+      paths in `SleepAnalysis/MS_buzcode_analysis.py` (`SYNC_FILE`,
+      `TASTE_FILES`, `OUT_DIR`) that pointed at the old MS11 folder names.
+      **Not yet fixed**: the separate copy at `Z:\Peleg\ImportantScripts\MS_buzcode_analysis.py`
+      still has the old paths — another argument for resolving the
+      source-of-truth item below.
 - [ ] **Reconcile MS11's shorter scored span** — MS11 is only scored for `hab3`
       alone, unlike MS08/MS09's full `hab3toExt`/`hab3_ext`. Check whether
       MS11's raw data for the rest of the protocol exists somewhere and just
       hasn't been scored yet, or was never fully recorded.
+- [x] ~~Sync MS08's corrected (theta-channel-370) buzcode output to
+      `Z:\Peleg`~~ — done 2026-09-17: `Z:\Peleg\MS08\MS08_Buzaki_results\` had
+      gone stale after the 2026-09-16 theta-channel fix (it still held the
+      channel-65 scoring from 2026-09-15's original sync). Re-synced all 5
+      `.mat` files + the `SWTHChannels.jpg` figure from `diskh2`, verified
+      byte-identical by size.
+- [x] ~~Check MS09/MS11 for the same rerun-then-forgot-to-sync gap~~ —
+      checked 2026-09-17: MS09 does **not** have a working alternate channel
+      after all. Channel 295 (highest raw theta power, from
+      `find_theta_channel.m`) turned out to be a licking/movement artifact
+      (theta rose *with* EMG, `sleep_sanity_check.py` showed REM at an
+      implausible 33% and video movement during "REM" nearly matching WAKE).
+      Channel 107 (found via a follow-up theta-vs-EMG decoupling scan,
+      correlation in the *correct* direction) gave a near-identical result —
+      turned out its theta-ratio distribution isn't actually bimodal, so
+      buzcode's threshold degenerated to 0 for both attempts. **MS09 is
+      reverted to its original channel 65** (verified via `sleep_sanity_check.py`:
+      back to REM 1.8%, matching the pre-fix baseline) — no channel tested so
+      far gives it a clean theta split, unlike MS08. `Z:\Peleg\MS09\MS09_Buzaki_results\`
+      was never touched by any of this (all work was on the `diskh2` working
+      copy), so it's already consistent with the reverted state. MS11's
+      equivalent gap is now its own Blocked item above (channel 81 found but
+      rescore not applied).
+- [x] ~~Mirror MS08's raw spike-sorted data onto `Z:\Peleg`~~ — done
+      2026-09-17: it previously lived only on `Z:\Mai\MS08\MS08_hab3toExp_g1\`
+      (a different share). Added `Z:\Peleg\MS08\MS08_Spike_Sorted_Data\` with
+      the minimal raw set Peleg's own PSTH analysis actually reads --
+      `spike_times.npy`, `spike_clusters.npy`, the `cluster_*.tsv` label
+      files, `good_units.csv`/`good_units_info.json`, both
+      `blocks_by_day_*.json` block-timing files, and the `imec0.ap.meta`
+      (AP sample rate) -- verified byte-identical by size. Deliberately
+      **not** mirrored: Mai's derived analysis tables
+      (`kilosort4_23_49h_mai/analysis/`) and ~50GB of extra Kilosort
+      byproducts (`pc_features.npy` etc.) nobody here reads, and the raw
+      video/AP-band binary (~80GB, `diskh2`-only) -- Peleg confirmed these
+      aren't needed right now.
 - [x] ~~Codify the real `SleepScoreMaster` invocation~~ — done 2026-09-15:
       copied `Z:\Peleg\MS11\run_sleep_score.m` into
       `SleepAnalysis/run_sleep_score.m` (git-tracked), with a header noting it's
       MS11-specific — channel 65 was **manually chosen** for SW/Theta detection
       (not buzcode's auto-default), so picking a good channel per animal is a
       required manual step before scoring a new rat.
-- [ ] **Decide the source of truth for the Python scripts** — `MS_buzcode_analysis.py`
-      and `VideoMovement.py` exist both in this git repo (`SleepAnalysis/`) and
-      at `Z:\Peleg\ImportantScripts\` (which also has `lightsheet_to_tiff.py`,
-      matching `Registration/`). These could silently drift apart; pick one and
-      treat the other as a mirror, or symlink them together.
+- [x] ~~Decide the source of truth for the Python scripts~~ — decided
+      2026-09-16, then **revised same day**: the git repo
+      (`ProjectPeleg/SleepAnalysis`/`Registration`) is the **sole** source of
+      truth. `Z:\Peleg\ImportantScripts\` is now considered obsolete/irrelevant
+      — it is *not* maintained as a mirror going forward (the earlier plan to
+      manually re-sync it is dropped). It was synced once on 2026-09-16 before
+      this decision, so it isn't currently stale, but no future git changes
+      will be propagated there. Leave the folder as-is on disk; don't delete it
+      unless asked.
 
 ## Ready to start
 
@@ -86,10 +157,14 @@ Concrete follow-ups:
       or timing in the intervening hours predicts the size or timing of that
       quickening (and of the late-epoch response-magnitude changes) on the CTA day.
       Needs: sleep-state timeline + GC units, both already available for the CTA day.
-- [ ] **Generalize `MS_buzcode_analysis.py`** — currently hardcoded to
-      `MS11_hab3` (paths, channel numbers, animal-specific config at the top of
-      the file). Turn into a reusable per-animal/per-session pipeline as more
-      animals come in.
+- [x] ~~Generalize `MS_buzcode_analysis.py`~~ — done: it now takes an
+      `ANIMAL` argument and reads all paths/channel numbers/LiCl time from an
+      `ANIMALS` config dict (MS08, MS09, MS11). Not one-copy-per-animal.
+- [x] ~~Add MS09 to `MS_buzcode_analysis.py`'s and
+      `training_day_sleep_state_extraction.py`'s shared `ANIMALS` config~~ —
+      done 2026-09-17: found MS09's LiCl injection time the same way as
+      MS08's (taste-event blocks, double-Sucrose CTA-induction block at hour
+      ~24.66h). Training-day extraction now runs for MS09 too.
 
 ## Under consideration
 
@@ -124,3 +199,54 @@ Concrete follow-ups:
       (`3d0ee2f..4da55ca`): README.md, TODO.md, Experiment Protocol and
       Procedure.md, the Articles swap, `generate_buzcode_xml.py`, and
       `run_sleep_score.m` (2026-09-15).
+- [x] Found and fixed MS08's theta-channel problem (channel 65, reused
+      from MS11, gave near-zero REM separation on MS08) via a full-384-channel
+      search (`SleepAnalysis/find_theta_channel.m`) — channel 370 found and
+      re-scored; wrote `SleepAnalysis/sleep_sanity_check.py` to catch this
+      class of problem automatically for any animal/session going forward
+      (2026-09-16).
+- [x] Built `SleepAnalysis/training_day_sleep_state_extraction.py`
+      (renamed 2026-09-17 from `training_day_sleep_classification.py`) — cuts
+      an animal's buzcode WAKE/NREM/REM classification down to a 24h Training
+      day window (9:00 AM on the day LiCl was injected through 9:00 AM the
+      next day), reports WAKE/NREM/REM %s and REM bout counts per Arieli et
+      al. (2022) phase (pre-injection / acquisition / intermediate /
+      consolidation / postconsolidation), and saves the cut
+      `.SleepState.states.mat` + a phase-breakdown CSV + a hypnogram plot to
+      `Z:\Peleg\<animal>\<animal>_Training_Day\`. Shares the `ANIMALS` config
+      with `MS_buzcode_analysis.py` (not a per-animal copy). Run for MS08
+      2026-09-17; needs MS09 added to `ANIMALS` first to run for MS09 (see
+      Ready to start, above); not applicable to MS11 (no Training day).
+- [x] Mirrored MS08's minimal raw spike-sorted data and re-synced its
+      corrected buzcode output to `Z:\Peleg\MS08\` (see "Data inventory &
+      organization" above for both) (2026-09-17).
+- [x] Mirrored the same minimal spike-sorted data set for MS09 — MS09 already
+      had an equivalent Kilosort output (`kilosort4_23_49h_mai`) on
+      `Z:\Mai\MS09\`, just not yet copied to `Z:\Peleg\MS09\MS09_Spike_Sorted_Data\`.
+      Copied the same file set as MS08's (plus MS09's extra `cluster_depth.tsv`),
+      verified byte-identical by size. Also ran `training_day_sleep_state_extraction.py`
+      for MS09, creating `Z:\Peleg\MS09\MS09_Training_Day\` (2026-09-17).
+- [x] Deleted all `StateScoreFigures\` folders (and their `_SWTHChannels.jpg`)
+      for MS08, MS09, and MS11 — both the local `diskh2` copies and the one on
+      `Z:\Peleg\MS08\MS08_Buzaki_results\`. Peleg confirmed the figure isn't
+      useful (it's a coarse, single-session, all-channels-aggregated diagnostic
+      that wouldn't have caught the MS09 channel-295 licking-artifact problem
+      anyway); `sleep_sanity_check.py` is more diagnostic. Buzcode regenerates
+      this figure automatically (best-effort, wrapped in try/catch) on any
+      future `SleepScoreMaster` run, so nothing needs to reference it (2026-09-17).
+- [x] **Fixed a real bug in the LiCl-injection-time formula** — it was computed
+      as 7 minutes after Block 1's *first* tastant, which visibly placed the
+      marker in the middle of the still-active taste-delivery block on the
+      hourly plots. Peleg caught this by inspecting `Z:\Peleg\MS08\MS08_buzcode_analysis`
+      directly. Correct rule (confirmed against `Experiment Protocol and
+      Procedure.md`): LiCl is injected ~5 minutes after Block 1's *last*
+      tastant. Fixed in `MS_buzcode_analysis.py`'s `ANIMALS` dict for both
+      MS08 (t=90888.5s) and MS09 (t=89688.7s); regenerated and re-synced all
+      hourly plots for both animals plus both `MS08_Training_Day`/
+      `MS09_Training_Day` outputs, which depend on the same value (2026-09-17).
+- [x] Consolidated the two MATLAB channel-search/scoring scripts the same way
+      `MS_buzcode_analysis.py` was — `find_theta_channel.m` and
+      `run_sleep_score.m` each now hold one `ANIMALS`-style struct (MS08/MS09/
+      MS11) switched via an `ANIMAL` variable at the top, instead of a
+      `_ms08`-suffixed copy per animal. Applies the same
+      no-script-duplication standard used for the Python side (2026-09-17).

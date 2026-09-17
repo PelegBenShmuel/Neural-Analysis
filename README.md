@@ -59,7 +59,40 @@ Summary:
 
 Also present in the recording: taste-delivery event markers (Water / Sucrose /
 Salt / Acid, from nidq sync channels) and video for a movement-based behavioral
-readout independent of LFP-derived EMG.
+readout independent of LFP-derived EMG. Taste code convention in the raw data
+(matches the `xd_0_<N>_0` sync-channel file suffix, e.g.
+`MS_buzcode_analysis.py`'s `TASTE_FILES`): **1 = Water, 2 = Sucrose, 3 = NaCl
+(Salt), 4 = Acid (Citric Acid)**.
+
+## Spike-level analysis — current focus: Training day only
+
+Peleg's own spike-level analysis (PSTHs, responsiveness, etc.) is scoped to
+**the Training day (Day 4)** — the LiCl-pairing day — not Day 5/Block 8 or any
+other sorted window, until stated otherwise.
+
+- **Where the raw spike-sorted data lives (MS08):** `Z:\Mai\MS08\MS08_hab3toExp_g1\`
+  (this recording file spans Hab D3 → Training day). Three independent
+  sorter outputs exist there — `kilosort3_23_50h_mai`, `kilosort4_23_49h`,
+  `kilosort4_23_49h_mai` — **currently using `kilosort4_23_49h_mai`** (Phy-curated,
+  41 "good" units). The other two are *not* confirmed to share the same time
+  base as this one (a spot check found `kilosort3_23_50h_mai`'s spike times
+  spanning 0–97,202s, not the expected ~82,800–176,400s) — don't swap sorter
+  outputs without re-verifying alignment first.
+- **Files actually needed for a PSTH** (the minimal raw set, deliberately not
+  Mai's derived analysis tables in that same folder's `analysis/` subfolder):
+  `spike_times.npy` + `spike_clusters.npy` (raw Kilosort output) +
+  `cluster_group.tsv` (Phy curation label, keep `good` only) + the AP-band
+  sample rate from `*.imec0.ap.meta`'s `imSampRate` (~29999.56 Hz measured, not
+  the nominal 30000 Hz) + the raw TPrime-corrected taste-event `_corr.txt`
+  files (already synced to the same clock as the spikes).
+- **Training day block structure** (per `Experiment Protocol and Procedure.md`):
+  **Block 1** = pre-injection reference (50 trials: 20 Sucrose + 10 each
+  Water/NaCl/CA) → **LiCl injected** ~5 min after Block 1 ends → **Blocks 2–7**
+  = post-LiCl (40 trials each, 10/taste, ~2h spacing). In this recording,
+  Block 1 falls at ~89,993–90,589s and Block 7 at ~140,394–140,868s.
+- MS08 is inferred **Experimental group** (not in the Control/Fam trio
+  MS15/MS18/MS20) — Sucrose is a genuinely novel CS here, making it the taste
+  most directly relevant to a CTA-driven responsiveness change.
 
 ## Animals & groups
 
@@ -83,9 +116,22 @@ novel for them.
     WAKE / NREM / REM classification from LFP (broadband slow-wave power, theta
     ratio, EMG-derived motion) — see `*.SleepState.states.mat` output.
   - `MS_buzcode_analysis.py` — loads buzcode sleep-state output + LFP + video
-    movement + taste-event timestamps for one session and visualizes them
-    together. Currently hardcoded to one animal/session (`MS11_hab3`) — a
-    candidate for generalizing into a reusable per-animal pipeline.
+    movement + taste-event timestamps and visualizes them together, hourly.
+    Takes an `ANIMAL` argument and reads all paths/channels/LiCl time from an
+    `ANIMALS` config dict (MS08, MS09, MS11) — one script, not a copy per
+    animal (see "How we work together").
+  - `sleep_sanity_check.py` — coverage/state-proportion/bout-duration/
+    taste-alignment/REM-plausibility/fragmentation checks for one animal's
+    buzcode output, run before trusting it for anything downstream. Same
+    `ANIMAL`-argument convention.
+  - `run_sleep_score.m` / `find_theta_channel.m` — the actual
+    `SleepScoreMaster` invocation and a memory-safe (bounded-window, capped-
+    worker) full-channel theta search, respectively. Same per-animal
+    `ANIMALS`-struct convention as the Python scripts, switched via an
+    `ANIMAL` variable.
+  - `training_day_sleep_state_extraction.py` — cuts an animal's buzcode
+    classification down to just the Training day (9AM-9AM around LiCl
+    injection), reporting WAKE/NREM/REM by Arieli et al. (2022) phase.
   - `VideoMovement.py` — per-frame movement via MOG2 background subtraction on
     session video, used as a video-based behavioral/EMG-proxy signal.
 - **`Registration/`** — `lightsheet_to_tiff.py`: converts lightsheet microscopy
@@ -210,6 +256,41 @@ the behavioral basis for "REM sleep is needed to modify the engram, not read it.
   slow-wave power, theta/delta ratio, and an EMG-proxy motion signal.
 - **UP/DOWN states** — sub-second bistable population activity states within NREM;
   UP = depolarized/spiking, DOWN = hyperpolarized/silent.
+
+## Known limitations
+
+- **REM/theta detection is structurally limited by electrode placement.**
+  buzcode's REM scoring depends on a clean theta-band signal, which cortical
+  LFP only picks up well at sites that are strongly coupled to the
+  hippocampal theta generator (e.g. medial prefrontal cortex, per Watson,
+  Levenstein, Greene, Gelinas & Buzsáki 2016 — the *Network Homeostasis and
+  State Dynamics of Neocortical Sleep* paper this scoring pipeline is built
+  around, which recorded from frontal cortical areas: mPFC, OFC, ACC,
+  secondary motor cortex). **Gustatory cortex is not part of that
+  hippocampal-theta-synchronized network** — GC's local rhythms are
+  dominated by taste/ingestion-related activity instead. Confirmed on MS08
+  2026-09-16: searching all 384 channels for the best theta separation
+  (`SleepAnalysis/find_theta_channel.m`) found a real channel (370, vs. the
+  poorly-separated channel 65 reused from MS11) and REM detection improved
+  methodologically (a genuine bimodal split now exists), but overall REM
+  still comes out sparse and short-bout (~1% of the recording, see
+  `sleep_sanity_check.py`) — a probe-placement ceiling, not a
+  channel-picking bug. Treat REM-timing results from this pipeline as
+  provisional/conservative for any animal recorded from GC rather than a
+  theta-coupled region.
+  **MS09 is worse, not just similarly limited:** its highest-raw-theta-power
+  channel (295) turned out to be actively misleading rather than merely
+  weak — theta rose *with* EMG/movement (a licking/chewing-rhythm artifact,
+  not real theta), inflating REM to an implausible 33% of the recording and
+  putting most taste deliveries outside WAKE. A follow-up channel (107),
+  chosen instead for having theta correctly *decoupled* from EMG, gave a
+  near-identical bad result because its theta-ratio distribution isn't
+  bimodal at all (buzcode's threshold-picking silently degenerates to 0 in
+  that case). MS09 is reverted to its original channel 65 — no channel
+  tested so far gives it a usable theta split, unlike MS08. **MS11** has a
+  real candidate (channel 81, channel 65 ranks 262nd of 384) found the same
+  way, but the rescore itself is blocked on infrastructure, not signal
+  quality — see TODO.md's Blocked section.
 
 ## How we work together
 
