@@ -25,17 +25,28 @@
 % its REM as unreliable regardless of channel choice. See README's "Known
 % limitations" section.
 
-% MS11's rescore with channel 81 (found via find_theta_channel.m,
-% 2026-09-17 -- channel 65 ranks 262nd of 384, channel 81 has the best
-% theta separation) is NOT YET APPLIED. MS11's local raw .lf.bin is gone
-% (moved/deleted from diskh2 at some point), so its .lfp symlink was
-% repointed at the NAS copy for this -- reading 2 channels across 73h that
-% way turned out to be extremely slow (>90min without finishing even the
-% initial LFP load) and was killed 2026-09-17 rather than left running
-% indefinitely. MS11 is still on its original channel 65 (data intact,
-% verified after the kill). See TODO.md for the plan to revisit this
-% (likely: copy the 506GB raw file back to local disk first, ~1.2TB free
-% on diskh2, rather than rescoring over SMB again).
+% MS11 is reverted to its original channel 65 (2026-09-18), same call as
+% MS09, after channel 81 (found via find_theta_channel.m, 2026-09-17 --
+% channel 65 ranks 262nd of 384, channel 81 has the best raw theta
+% separation) was actually applied and tested. Getting there required
+% copying the 506GB raw .lf.bin back to local disk first (MS11's local
+% copy was gone; rescoring over the NAS symlink was killed 2026-09-17
+% after >90min without even finishing the LFP load) -- copied to
+% /media/anan/diskh2/MS11/MS11_hab3_g0_t0.imec0.lf.bin on 2026-09-18 and
+% repointed the .lfp symlink there, then rescored at local-NVMe speed.
+% Result: channel 81 passed the EMG-quiescence check (REM epochs look
+% quiet, not WAKE-like) but hit the SAME degenerate-threshold failure
+% that sank MS09's alternates -- buzcode's bimodal-dip test failed AND
+% its "exclude NREM and retry" fallback also failed (channel 65 only
+% failed the first test), falling through to a last-resort default
+% threshold. REM ballooned to 16.7% (789 bouts, outside the 3-15%
+% typical range) vs. channel 65's 6.7% (284 bouts, in range) -- treat
+% that extra REM as an artifact of an unvalidated threshold, not a real
+% improvement. See compare_theta_channels.py and
+% Z:\Peleg\MS11\MS11_theta_channel_comparison\ for the full comparison;
+% the channel-81 result set is archived (not deleted) at
+% diskh2/MS11/MS11_hab3/channel81_explored_not_adopted_20260918/ and
+% Z:\Peleg\MS11\MS11_Buzaki_results_ch81\.
 
 ANIMAL = 'MS11';
 
@@ -44,7 +55,7 @@ ANIMALS = struct( ...
         'basePath',      '/media/anan/diskh2/MS11/MS11_hab3', ...
         'rejectChannels', [384], ...
         'SWChannels',     [65], ...
-        'ThetaChannels',  [65]), ...  % channel 81 found but not yet applied, see comment above
+        'ThetaChannels',  [65]), ...  % reverted -- 81 tested and rejected, see comment above, 2026-09-18
     'MS08', struct( ...
         'basePath',      '/media/anan/diskh2/MS08/MS08_hab3toExp', ...
         'rejectChannels', [384], ...

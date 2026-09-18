@@ -132,6 +132,11 @@ novel for them.
   - `training_day_sleep_state_extraction.py` — cuts an animal's buzcode
     classification down to just the Training day (9AM-9AM around LiCl
     injection), reporting WAKE/NREM/REM by Arieli et al. (2022) phase.
+  - `compare_theta_channels.py` — compares two scorings of the same
+    recording that differ only in theta channel (e.g. MS11's channel 65 vs.
+    81), reusing `sleep_sanity_check.py`'s loading/checking functions rather
+    than duplicating them; produces a side-by-side stats table and a stacked
+    hypnogram figure.
   - `VideoMovement.py` — per-frame movement via MOG2 background subtraction on
     session video, used as a video-based behavioral/EMG-proxy signal.
 - **`Registration/`** — `lightsheet_to_tiff.py`: converts lightsheet microscopy
@@ -288,9 +293,21 @@ the behavioral basis for "REM sleep is needed to modify the engram, not read it.
   bimodal at all (buzcode's threshold-picking silently degenerates to 0 in
   that case). MS09 is reverted to its original channel 65 — no channel
   tested so far gives it a usable theta split, unlike MS08. **MS11** has a
-  real candidate (channel 81, channel 65 ranks 262nd of 384) found the same
-  way, but the rescore itself is blocked on infrastructure, not signal
-  quality — see TODO.md's Blocked section.
+  real candidate (channel 81, channel 65 ranks 262nd of 384) that was
+  actually applied and tested (2026-09-18, after copying its 506GB raw file
+  to local disk so the rescore ran at a reasonable speed) — but it hit the
+  same degenerate-threshold failure as MS09's alternates: buzcode's
+  bimodal-dip test failed *and* its NREM-exclusion fallback also failed,
+  inflating REM to 16.7%/789 bouts (outside the typical 3-15% range) vs.
+  channel 65's 6.7%/284 bouts. It passed the EMG-quiescence check (unlike
+  MS09's channel 295), so it isn't an obvious movement artifact, but the
+  extra REM likely comes from an unvalidated threshold rather than real
+  sensitivity. MS11 is reverted to channel 65, same call as MS09; the
+  channel-81 result is archived (not deleted) at `Z:\Peleg\MS11\
+  MS11_Buzaki_results_ch81\` and the comparison at `Z:\Peleg\MS11\
+  MS11_theta_channel_comparison\` (see `SleepAnalysis/compare_theta_channels.py`),
+  in case an independent video-movement trace for MS11 is worth building
+  later to settle it either way.
 
 ## How we work together
 

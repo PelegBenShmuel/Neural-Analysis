@@ -227,6 +227,10 @@ def check_rem_plausibility(t, states, t_clus, motion, mo_thr, video_file, mov_fp
               'consistent with real REM muscle atonia rather than mislabeled WAKE.')
 
     # (b) independent video movement signal, if reachable
+    if video_file is None:
+        print('  [SKIPPED] no video_file configured for this animal -- only '
+              'the EMG-from-LFP cross-check above is available.')
+        return
     if not (os.path.exists(video_file) and os.path.exists(sync_file)):
         print('  [SKIPPED] video/sync files not reachable from this machine.')
         return
@@ -368,9 +372,9 @@ def main():
     check_proportions(t, states)
     durations = check_bouts(bouts)
     check_taste_alignment(t, states, cfg['sync_file'], cfg['taste_files'])
-    if 'video_file' in cfg:
-        check_rem_plausibility(t, states, t_clus, motion, mo_thr,
-                                cfg['video_file'], cfg['mov_fps'], cfg['sync_file'])
+    check_rem_plausibility(t, states, t_clus, motion, mo_thr,
+                            cfg.get('video_file'), cfg.get('mov_fps'),
+                            cfg['sync_file'])
     check_rem_fragmentation(bouts, states, t)
     plot_summary(animal, t, states, durations, cfg['out_dir'])
 

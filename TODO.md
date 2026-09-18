@@ -10,25 +10,6 @@ let status live only in chat.
       currently unavailable per Anan Moran. Unblocks: any within-unit
       before/after-CTA GC comparison. Re-check status periodically; this is the
       single biggest constraint on the project's scope right now.
-- [ ] **MS11 theta-channel rescore (channel 81) not yet applied — blocked on
-      slow NAS read.** `find_theta_channel.m` found channel 81 is MS11's best
-      theta channel (channel 65 ranks 262nd of 384), same class of fix as
-      MS08. But MS11's raw `.lf.bin` is gone from local disk (`diskh2`) —
-      only the 506GB copy on `Z:\Peleg\MS11\MS_11_Raw_Data\` remains, so the
-      `.lfp` symlink was repointed there for the rescore. Reading just 2
-      channels across the full 73h that way took **>90 minutes without even
-      finishing the initial LFP load** (SMB + the raw file's per-channel-
-      interleaved layout means every read is scattered, not sequential) —
-      killed 2026-09-17 rather than left running indefinitely. MS11 is back
-      on its original channel 65 (verified data intact after the kill: still
-      the June 24 files, `SleepScoreLFP.LFP.mat` restored from backup after
-      also getting wiped by the aborted attempt).
-      **Next assignment:** either (a) copy the 506GB raw file back to local
-      `diskh2` first (~1.2TB free there as of 2026-09-17, so it fits) and
-      rescore at local-NVMe speed like MS08/MS09, or (b) just retry over SMB
-      with more patience/a longer timeout. Once rescored, also re-run
-      `sleep_sanity_check.py MS11` and check for the same movement/EMG-
-      artifact signature MS09's channel 295 showed before trusting it.
 
 ## Data inventory & organization (MS08 / MS09 / MS11 only)
 
@@ -284,3 +265,29 @@ Concrete follow-ups:
       Peleg reconnected it manually. Lesson for next time: ask Peleg to clear
       a stuck file from a Windows client rather than restarting the SMB
       connection process again.
+- [x] **Applied and tested MS11's channel-81 theta-channel candidate, then
+      reverted — same outcome as MS09.** Copied the 506GB raw `.lf.bin` back
+      to local `diskh2` (~3h over SMB at ~45MB/s, `/media/anan/diskh2/MS11/
+      MS11_hab3_g0_t0.imec0.lf.bin`), repointed the `.lfp` symlink there, and
+      rescored channel 81 at local-NVMe speed (2026-09-18). Result: passed
+      the EMG-quiescence check (REM epochs are quiet, not WAKE-like — not an
+      obvious movement artifact like MS09's channel 295), but hit the same
+      degenerate-threshold failure that sank MS09's alternates — buzcode's
+      bimodal-dip test failed *and* its "exclude NREM and retry" fallback
+      also failed (channel 65 only fails the first test), so REM ballooned
+      to 16.7%/789 bouts (outside the 3-15% typical range) vs. channel 65's
+      6.7%/284 bouts (in range). Built `SleepAnalysis/compare_theta_channels.py`
+      (reuses `sleep_sanity_check.py`'s loading/checking functions on two
+      `.mat` files instead of duplicating them) to produce the side-by-side
+      table + stacked hypnogram, saved to `Z:\Peleg\MS11\
+      MS11_theta_channel_comparison\`. Peleg's call: revert to channel 65 as
+      the trusted baseline (`run_sleep_score.m` updated back to
+      `ThetaChannels=[65]`); the channel-81 result set is archived, not
+      deleted, at `diskh2/MS11/MS11_hab3/channel81_explored_not_adopted_20260918/`
+      and `Z:\Peleg\MS11\MS11_Buzaki_results_ch81\`, in case it's worth
+      another look after MS11 gets an independent video-movement trace.
+      Also fixed a real bug found along the way in `sleep_sanity_check.py`:
+      the REM-plausibility check (section 5) was being skipped *entirely*
+      for any animal missing a `video_file`, even though its EMG-only
+      cross-check doesn't need video — meant MS11 was never getting that
+      check run at all before today.
