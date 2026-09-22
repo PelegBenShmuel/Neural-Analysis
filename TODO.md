@@ -82,11 +82,19 @@ Concrete follow-ups:
       buzcode's threshold degenerated to 0 for both attempts. **MS09 is
       reverted to its original channel 65** (verified via `sleep_sanity_check.py`:
       back to REM 1.8%, matching the pre-fix baseline) — no channel tested so
-      far gives it a clean theta split, unlike MS08. `Z:\Peleg\MS09\MS09_Buzaki_results\`
-      was never touched by any of this (all work was on the `diskh2` working
-      copy), so it's already consistent with the reverted state. MS11's
-      equivalent gap is now its own Blocked item above (channel 81 found but
-      rescore not applied).
+      far gives it a clean theta split, unlike MS08. MS11's equivalent
+      channel-81 test/revert happened later (see "Applied and tested MS11's
+      channel-81 theta-channel candidate" below), same outcome, reverted to 65.
+      **Resolved 2026-09-22 (Peleg's explicit call): `Z:\Peleg\MS09\MS09_Buzaki_results\`
+      (July 5) and `Z:\Peleg\MS11\MS11_Buzaki_results\` (June 24) are
+      deliberately left untouched, not re-synced from `diskh2`.** Both predate
+      every one of the failed channel experiments above and already hold the
+      channel-65 baseline scoring that both animals were ultimately reverted
+      back to — Peleg considers these **the most accurate results for MS09
+      and MS11**, not stale files needing a refresh. Don't overwrite them with
+      a "fresher" `diskh2` copy; this is an intentional exception to the
+      general "keep `Z:\Peleg` in sync with `diskh2`" rule, specific to these
+      two files.
 - [x] ~~Mirror MS08's raw spike-sorted data onto `Z:\Peleg`~~ — done
       2026-09-17: it previously lived only on `Z:\Mai\MS08\MS08_hab3toExp_g1\`
       (a different share). Added `Z:\Peleg\MS08\MS08_Spike_Sorted_Data\` with
