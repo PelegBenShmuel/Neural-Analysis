@@ -7,13 +7,15 @@ Reads <animal>_Training_Day/<session>_TrainingDay.SleepState.states.mat from
 Z:\\Peleg and reports:
   1. Sleep-bout-duration histogram -- how many *sleep* bouts (continuous
      NREM+REM stretches -- i.e. anything that isn't WAKE, merged across
-     NREM<->REM transitions) fall in 0-2min / 2-5min / 5-10min bins (plus a
-     >10min bin, added so no bout is silently dropped from the accounting).
-  2. Hourly sleep distribution -- what % of the day's TOTAL sleep time fell
-     in each of the 24 clock hours of the Training day (e.g. "18% of all
-     sleep happened in the first hour") -- not the % of each hour spent
-     asleep, which is a different question already covered by
-     training_day_sleep_state_extraction.py's phase-composition plot.
+     NREM<->REM transitions) fall in 0-5min / 5-10min / 10-20min / 20+min
+     bins.
+  2. Hourly sleep amount -- how many minutes of sleep fell in each of the 24
+     clock hours of the Training day, plus each hour's % of that day's TOTAL
+     sleep time (e.g. "18% of all sleep happened in the first hour"), and a
+     final Total row/line summing to the day's total sleep. This is a
+     different question from % of each hour spent asleep, which is already
+     covered by training_day_sleep_state_extraction.py's phase-composition
+     plot.
 
 Reuses per-animal config (session name, buzcode_analysis dir -> derives the
 Training_Day dir the same way training_day_sleep_state_extraction.py does)
@@ -49,10 +51,10 @@ STATE_CODE = {'WAKE': 1, 'NREM': 3, 'REM': 5}
 SLEEP_CODES = (STATE_CODE['NREM'], STATE_CODE['REM'])
 
 BOUT_BINS = [
-    ('0-2 min',  0.0,   120.0),
-    ('2-5 min',  120.0, 300.0),
-    ('5-10 min', 300.0, 600.0),
-    ('>10 min',  600.0, np.inf),
+    ('0-5 min',   0.0,   300.0),
+    ('5-10 min',  300.0, 600.0),
+    ('10-20 min', 600.0, 1200.0),
+    ('20+ min',   1200.0, np.inf),
 ]
 
 
@@ -141,6 +143,15 @@ def main():
 
     per_hour_s, pct = hourly_sleep_pct(t, dt, is_sleep, window_start_s)
 
+    hour_clock_labels = [(rec_start + timedelta(seconds=window_start_s + k * 3600)).strftime('%H:%M')
+                         for k in range(24)]
+    pct_header = "% of day's sleep"
+    print(f'\n{"Hour":<6s}{"Clock":<8s}{"Sleep (min)":>13s}{pct_header:>18s}')
+    for k in range(24):
+        print(f'{k:<6d}{hour_clock_labels[k]:<8s}{per_hour_s[k]/60:>12.1f} {pct[k]:>16.1f}%')
+    print(f'{"-"*45}')
+    print(f'{"Total":<14s}{total_s/3600:>10.2f}h{"":>7s}{100.0:>16.1f}%')
+
     out_dir = f'/tmp/{animal}_sleep_char'
     os.makedirs(out_dir, exist_ok=True)
 
@@ -154,11 +165,12 @@ def main():
     hourly_csv = os.path.join(out_dir, f'{animal}_hourly_sleep_pct.csv')
     with open(hourly_csv, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['hour_index', 'hour_start_clock', 'sleep_seconds', 'pct_of_total_sleep'])
+        writer.writerow(['hour_index', 'hour_start_clock', 'sleep_seconds', 'sleep_minutes', 'pct_of_total_sleep'])
         for k in range(24):
-            hour_start = rec_start + timedelta(seconds=window_start_s + k * 3600)
-            writer.writerow([k, hour_start.strftime('%H:%M'), f'{per_hour_s[k]:.1f}', f'{pct[k]:.2f}'])
-    print(f'Hourly sleep-% table saved -> {hourly_csv}')
+            writer.writerow([k, hour_clock_labels[k], f'{per_hour_s[k]:.1f}',
+                              f'{per_hour_s[k]/60:.2f}', f'{pct[k]:.2f}'])
+        writer.writerow(['Total', '', f'{total_s:.1f}', f'{total_s/60:.2f}', '100.00'])
+    print(f'Hourly sleep-amount table saved -> {hourly_csv}')
 
     # ── Plot ──
     fig, (ax_bins, ax_hourly) = plt.subplots(1, 2, figsize=(15, 5.5))
@@ -174,14 +186,13 @@ def main():
     ax_bins.set_title('Sleep-bout duration distribution', fontsize=11)
     ax_bins.spines[['top', 'right']].set_visible(False)
 
-    hour_labels = [(rec_start + timedelta(seconds=window_start_s + k * 3600)).strftime('%H:%M')
-                   for k in range(24)]
-    ax_hourly.bar(range(24), pct, color='#5cb85c', edgecolor='white')
+    ax_hourly.bar(range(24), per_hour_s / 60, color='#5cb85c', edgecolor='white')
+    ax_hourly.axhline(60, color='#888', linestyle='--', linewidth=1)
     ax_hourly.set_xticks(range(0, 24, 2))
-    ax_hourly.set_xticklabels([hour_labels[i] for i in range(0, 24, 2)], rotation=45, ha='right')
-    ax_hourly.set_ylabel('% of total sleep that day')
+    ax_hourly.set_xticklabels([hour_clock_labels[i] for i in range(0, 24, 2)], rotation=45, ha='right')
+    ax_hourly.set_ylabel('Minutes asleep')
     ax_hourly.set_xlabel('Hour of Training day')
-    ax_hourly.set_title("When the day's sleep happened", fontsize=11)
+    ax_hourly.set_title(f"Sleep amount by hour (total: {total_s/3600:.2f}h/24h)", fontsize=11)
     ax_hourly.spines[['top', 'right']].set_visible(False)
 
     plt.tight_layout(rect=[0, 0, 1, 0.94])
