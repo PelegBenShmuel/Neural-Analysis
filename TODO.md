@@ -390,3 +390,11 @@ Concrete follow-ups:
         color for fast visual scanning.
       - See the two "Ready to start" follow-ups above (extend to MS09;
         port scratch scripts into a real repo script) for what's left.
+- [x] **Added per-hour sleep amount (minutes) and a 24h total to
+      `sleep_char.py`** — it previously only reported each hour's % of the
+      day's total sleep, with no absolute amount and no running total.
+      Added a printed table + a `Total` row in `<animal>_hourly_sleep_pct.csv`,
+      and switched the hourly plot panel from "% of total sleep" to "minutes
+      asleep" (with a 60min reference line and the 24h total in the panel
+      title). Regenerated and re-synced for MS08 (11.83h/24h total), MS09
+      (10.82h/24h), and MS11 (12.02h/24h) (2026-09-22).

@@ -93,6 +93,30 @@ other sorted window, until stated otherwise.
 - MS08 is inferred **Experimental group** (not in the Control/Fam trio
   MS15/MS18/MS20) — Sucrose is a genuinely novel CS here, making it the taste
   most directly relevant to a CTA-driven responsiveness change.
+- **MS09 and MS11 have the same minimal spike-sorted file set mirrored** to
+  `Z:\Peleg\<animal>\<animal>_Spike_Sorted_Data\` now, so this analysis isn't
+  MS08-only going forward. **MS11 needed a correction first (2026-09-22)**:
+  its `licl_time_s` was wrongly `None` ("hab-day-only recording"), assumed
+  rather than checked — its raw taste-event data actually shows the same
+  double-Sucrose Block 1 signature as MS08/MS09 (20 vs. 10, at
+  t=88694.3-89292.2s), so it does have a real Training day; fixed and its
+  sleep-side Training-day extraction (`Z:\Peleg\MS11\MS11_Training_Day\`) now
+  exists to match MS08/MS09.
+- **`NeuralAnalysis/cluster_responsiveness.py`** ports the PSTH/ZETA/ANOVA
+  method above into a real, git-tracked script (previously ad-hoc scratch
+  scripts). Built and run on MS08's 41 good units first: the two
+  responsiveness tests agree 85% of the time (25.5% both-responsive, 59.5%
+  both-not, 15% disagree) — a real but imperfect cross-check. One
+  single-neuron finding worth following up: cluster 19's Sucrose
+  responsiveness was significant pre-LiCl, lost in Blocks 2-3, and regained
+  from Block 4 on — not yet checked across more units. **Caution before
+  trusting MS09/MS11 numbers from this script as much as MS08's**: MS08's
+  `cluster_group.tsv` was manually curated down to 41 "good" units from 245
+  raw clusters (100% of survivors kept), while MS09 (225 of 537) and MS11
+  (256 of 257) show a much blunter cut — most of what survives an initial
+  prune gets labeled "good" without MS08's apparent per-unit scrutiny, worth
+  confirming with Mai/Anan before reading too much into per-unit results
+  there.
 
 ## Animals & groups
 
@@ -132,6 +156,10 @@ novel for them.
   - `training_day_sleep_state_extraction.py` — cuts an animal's buzcode
     classification down to just the Training day (9AM-9AM around LiCl
     injection), reporting WAKE/NREM/REM by Arieli et al. (2022) phase.
+  - `sleep_char.py` — sleep-bout-duration distribution and per-hour sleep
+    amount (minutes asleep + % of that day's total, with a 24h total) for
+    an animal's Training-day cut; reads the same output
+    `training_day_sleep_state_extraction.py` writes.
   - `compare_theta_channels.py` — compares two scorings of the same
     recording that differ only in theta channel (e.g. MS11's channel 65 vs.
     81), reusing `sleep_sanity_check.py`'s loading/checking functions rather
@@ -139,6 +167,14 @@ novel for them.
     hypnogram figure.
   - `VideoMovement.py` — per-frame movement via MOG2 background subtraction on
     session video, used as a video-based behavioral/EMG-proxy signal.
+- **`NeuralAnalysis/`** — spike-level analysis (see "Spike-level analysis"
+  above).
+  - `cluster_responsiveness.py` — per-(cluster x taste x Training-day-block)
+    responsiveness: builds PSTHs from raw Kilosort/Phy output and runs two
+    independent tests (ZETA and a repeated-measures ANOVA over 250ms bins)
+    so results can be cross-checked against each other. Imports shared
+    config/helpers (`ANIMALS`, `TASTE_COLORS`, `copy_to_share_safely`) from
+    `SleepAnalysis/MS_buzcode_analysis.py` rather than redefining them.
 - **`Registration/`** — `lightsheet_to_tiff.py`: converts lightsheet microscopy
   channel data to TIFF, likely for histological verification of probe/fiber
   placement.
