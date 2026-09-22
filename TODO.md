@@ -33,7 +33,7 @@ Current state on `Z:\Peleg` (`smb://anannas/data/Peleg`), as of 2026-09-16 —
 |---|---|---|---|---|
 | MS08 | `hab3toExp`, ~73h (confirmed via video length) | `MS_08_Raw_Data\` | `MS08_Buzaki_results\` | `MS08_buzcode_analysis\` (74 plots) |
 | MS09 | `hab3_ext`, ~73h | `MS_09_Raw_Data\` | `MS09_Buzaki_results\` | `MS09_buzcode_analysis\` (73 plots) |
-| MS11 | `hab3` **only** (single day, not hab3-to-extinction) | `MS_11_Raw_Data\` | `MS11_Buzaki_results\` | `MS11_buzcode_analysis\` (74 plots) |
+| MS11 | `hab3`, ~73h — buzcode scoring is labeled "hab3" but actually spans the full hab3-to-extinction recording, same as MS08/MS09 (corrected 2026-09-22, see below) | `MS_11_Raw_Data\` | `MS11_Buzaki_results\` | `MS11_buzcode_analysis\` (74 plots) |
 
 Concrete follow-ups:
 
@@ -58,10 +58,12 @@ Concrete follow-ups:
       **Not yet fixed**: the separate copy at `Z:\Peleg\ImportantScripts\MS_buzcode_analysis.py`
       still has the old paths — another argument for resolving the
       source-of-truth item below.
-- [ ] **Reconcile MS11's shorter scored span** — MS11 is only scored for `hab3`
-      alone, unlike MS08/MS09's full `hab3toExt`/`hab3_ext`. Check whether
-      MS11's raw data for the rest of the protocol exists somewhere and just
-      hasn't been scored yet, or was never fully recorded.
+- [x] ~~Reconcile MS11's shorter scored span~~ — resolved 2026-09-22: it
+      wasn't shorter. The `SleepState.states.mat` itself already spans the
+      full ~73h (confirmed independently via `sleep_sanity_check.py`'s
+      73.03h recording-span readout, matching MS08/MS09); only the *session
+      label* ("hab3") and the assumption built on it ("no Training day")
+      were wrong — see the MS11-Training-day item above for the fix.
 - [x] ~~Sync MS08's corrected (theta-channel-370) buzcode output to
       `Z:\Peleg`~~ — done 2026-09-17: `Z:\Peleg\MS08\MS08_Buzaki_results\` had
       gone stale after the 2026-09-16 theta-channel fix (it still held the
@@ -146,6 +148,51 @@ Concrete follow-ups:
       done 2026-09-17: found MS09's LiCl injection time the same way as
       MS08's (taste-event blocks, double-Sucrose CTA-induction block at hour
       ~24.66h). Training-day extraction now runs for MS09 too.
+
+- [x] ~~Port the ad-hoc PSTH/ZETA/ANOVA scratch scripts into a real,
+      git-tracked script~~ — done 2026-09-22: `NeuralAnalysis/cluster_responsiveness.py`,
+      `ANIMALS`-config-based (imports `ANIMALS`/`TASTE_COLORS`/
+      `copy_to_share_safely` from `MS_buzcode_analysis.py` rather than
+      redefining them). Fixed two real bugs found while consolidating:
+      (1) ZETA silently defaulting to `p=1.0` on too-few-spikes is now
+      recorded as `zeta_p=None`/`responsive_zeta=None` instead; (2)
+      `copy_to_share_safely`'s `os.replace` doesn't reliably overwrite an
+      existing destination over this gvfs-SMB mount (`FileExistsError`) —
+      added a remove-then-retry fallback.
+- [x] **Found and fixed a wrong assumption: MS11 does have a real Training
+      day** — `ANIMALS['MS11']['licl_time_s']` was `None` ("hab-day-only
+      recording; no CTA/LiCl event"), based only on buzcode sleep-scoring
+      having been done for Hab D3 alone, never checked against MS11's own
+      Neuropixels/Kilosort recording. Peleg pushed back on this 2026-09-22
+      when it surfaced as a reason MS11 was being skipped; checking the raw
+      data directly showed MS11's Block 1 has the same double-Sucrose
+      signature as MS08/MS09 (20 vs. 10, at t=88694.3-89292.2s) — a real
+      Training day, just never organized/scored as one. Fixed: `licl_time_s`
+      set (89592.2s, same 5-min-after-Block-1 rule), spike-sorted data
+      mirrored to `Z:\Peleg\MS11\MS11_Spike_Sorted_Data\` (same minimal set
+      as MS08/MS09) and taste-event files upgraded to the `_corr` (TPrime-
+      corrected) versions in `Z:\Peleg\MS11\MS_11_Raw_Data\` (previously only
+      uncorrected copies existed there). **Follow-up closed 2026-09-22**: ran
+      `training_day_sleep_state_extraction.py MS11` and `sleep_char.py MS11`
+      — `Z:\Peleg\MS11\MS11_Training_Day\` now exists, matching MS08/MS09's
+      structure exactly. MS11's Training day: 50.1% asleep over the 24h
+      window, REM rises from 5.9% pre-injection to a 6-12h Consolidation
+      peak of 10.0% (25 REM bouts) — same qualitative post-LiCl REM-increase
+      shape as MS08/MS09, on the (reverted-to-original) channel 65 scoring.
+- [ ] **Curation-quality difference found across animals, worth checking
+      with Mai/Anan**: MS08's `cluster_group.tsv` was manually curated from
+      245 raw Kilosort clusters down to 41 "good" units (100% of survivors).
+      MS09 (537 raw -> 225 survivors, 224 "good") and MS11 (256 "good" out of
+      257) show a much blunter cut -- most of what survives an initial prune
+      gets labeled "good" without MS08's apparent per-unit scrutiny. Numbers
+      from `cluster_responsiveness.py` runs on MS09/MS11 should be treated
+      with more caution than MS08's until this is confirmed one way or the
+      other.
+      `sleep_char.py` already use) — right now this analysis exists only as a
+      sequence of one-off scratchpad scripts (`step1_explore.py` through
+      `step11_make_xlsx.py`, in Claude's session scratchpad, not the repo).
+      That's a real gap relative to this project's no-per-animal-duplication
+      norm; needed before running it on MS09 or re-running it on MS08.
 
 ## Under consideration
 
@@ -291,3 +338,55 @@ Concrete follow-ups:
       for any animal missing a `video_file`, even though its EMG-only
       cross-check doesn't need video — meant MS11 was never getting that
       check run at all before today.
+- [x] **Built a from-scratch PSTH + taste-responsiveness pipeline for MS08's
+      Training day, using only raw spike-sorter output** — deliberately not
+      Mai's derived analysis tables (`kilosort4_23_49h_mai/analysis/`), per
+      Peleg's request to understand/own the method rather than consume her
+      results. Built incrementally through this session (2026-09-16 to
+      2026-09-22):
+      - **PSTH construction** from raw `spike_times.npy` + `spike_clusters.npy`
+        (Kilosort4, Phy-curated) + `cluster_group.tsv` (`good` units only) +
+        the true AP-band sample rate from `*.imec0.ap.meta`'s `imSampRate`
+        (~29999.56 Hz, not nominal 30000) + the raw TPrime-corrected
+        taste-event `_corr.txt` files. Block boundaries (7 Training-day
+        blocks) re-derived independently via gap-detection on the raw event
+        timestamps, not copied from Mai's `blocks_by_day_*.json` — cross-
+        validated as matching.
+      - **Two independent responsiveness tests**, run per (cluster x taste x
+        block), so results can be cross-checked against each other rather
+        than trusted from one method alone:
+        - **ZETA test** (`zetapy`, Montijn et al. 2021 — same package Mai
+          already uses) — parameter-free, no bin-size choice, most sensitive
+          to a real but temporally localized/jittery response.
+        - **Repeated-measures ANOVA** (`statsmodels.stats.anova.AnovaRM`,
+          main effect of 250ms time-bin, Piette et al. 2012-style binning) —
+          same statistical family already used in this project's own
+          literature (Piette 2012, Arieli 2022).
+        - Across all 41 good units x 4 tastes x 7 blocks (1148 tests, pooled-
+          taste rows since removed per Peleg's request): the two tests agree
+          85% of the time (25.5% both-responsive, 59.5% both-not; 15%
+          disagree) — a reasonable cross-check, not perfect concordance.
+      - **Real finding worth following up (single-neuron, not yet
+        generalized)**: cluster 19's Sucrose responsiveness (ZETA) was
+        significant pre-LiCl (Block 1), lost in Blocks 2-3 (immediately
+        post-LiCl), and regained from Block 4 onward — a responsive-to-non-
+        responsive-to-responsive trajectory across the LiCl-pairing moment,
+        for the one taste most directly relevant to CTA. NaCl showed close
+        to the reverse (silent early, responsive from Block 4 on). Needs
+        checking across more units before treating as a real population
+        effect.
+      - **Known limitation**: ZETA fails (defaults to `p=1.0`, not a real
+        null result) when a unit has too few spikes in the test window —
+        hit this in 198/1435 tests (mostly very low-firing-rate units, e.g.
+        cluster 109 at 0.07 Hz overall). Don't read `responsive=False` at
+        face value for a low-firing-rate unit without checking its overall
+        rate first.
+      - **Output**, all 41 good units, saved to
+        `Z:\Peleg\MS08\Cluster_analysis\cluster_<ID>\`: 7 per-block PSTH
+        PNGs (raster + PSTH, colored by taste) + one
+        `cluster<ID>_responsiveness_by_taste_and_block.csv` (block x taste x
+        n_trials x zeta_p/responsive_zeta x anova_p/responsive_anova) + a
+        matching `.xlsx` with each block's rows shaded a distinct background
+        color for fast visual scanning.
+      - See the two "Ready to start" follow-ups above (extend to MS09;
+        port scratch scripts into a real repo script) for what's left.

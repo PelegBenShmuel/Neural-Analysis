@@ -46,17 +46,31 @@ ANIMALS = {
         mat_file  = '/media/anan/diskh2/MS11/MS11_hab3/MS11_hab3.SleepState.states.mat',
         lfp_mat   = '/media/anan/diskh2/MS11/MS11_hab3/MS11_hab3.SleepScoreLFP.LFP.mat',
         mov_file  = f'{NAS_PELEG}/MS11/MS11_old_pipeline/data/11_VideoMovement.npy',
+        # No _corr variant of the sync file exists for MS11 (unlike the taste
+        # files below) -- this is the only one Mai's share has.
         sync_file = f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_7_0.txt',
         taste_files = {
-            'Water'  : f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_1_0.txt',
-            'Sucrose': f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_2_0.txt',
-            'Salt'   : f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_3_0.txt',
-            'Acid'   : f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_4_0.txt',
+            'Water'  : f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_4_0_corr.txt',
         },
         out_dir   = f'{NAS_PELEG}/MS11/MS11_buzcode_analysis',
         lfp_ch    = 65,
         rec_start = datetime(2025, 5, 27, 9, 41, 49),
-        licl_time_s = None,   # hab-day-only recording; no CTA/LiCl event in this session
+        # CORRECTED 2026-09-22 -- this was wrongly `None` ("hab-day-only
+        # recording; no CTA/LiCl event in this session"), based only on
+        # buzcode sleep-scoring having been done for Hab D3 alone. The
+        # Neuropixels/Kilosort recording (MS11_hab3_g0) actually extends
+        # through a full Training day: its own taste-event blocks show the
+        # same double-Sucrose Block 1 signature as MS08/MS09 (20 Sucrose vs.
+        # 10 each Water/NaCl/Acid, at t=88694.3-89292.2s), confirmed directly
+        # from the raw _corr.txt event files, not assumed. Same rule as
+        # MS08/MS09: LiCl ~5min after Block 1's last tastant.
+        licl_time_s = 89292.224696 + 5 * 60,
+        # Mirrored from Z:\Mai\MS11\MS11_hab3_g0\kilosort4_23_49h_mai\
+        # 2026-09-22, same minimal file set as MS08/MS09.
+        spike_sorted_dir = f'{NAS_PELEG}/MS11/MS11_Spike_Sorted_Data',
     ),
     'MS08': dict(
         session   = 'MS08_hab3toExp',
@@ -85,6 +99,10 @@ ANIMALS = {
         # Peleg caught the LiCl marker landing mid-block on the hourly
         # plots; the earlier version wrongly used firstevent+7min.
         licl_time_s = 90588.5 + 5 * 60,
+        # Minimal raw Kilosort4/Phy output (kilosort4_23_49h_mai, Phy-curated,
+        # 41 "good" units), mirrored from Z:\Mai\MS08\MS08_hab3toExp_g1\ --
+        # see TODO.md "Mirrored MS08's minimal raw spike-sorted data" (2026-09-17).
+        spike_sorted_dir = f'{NAS_PELEG}/MS08/MS08_Spike_Sorted_Data',
     ),
     'MS09': dict(
         session   = 'MS09_hab3_ext',
@@ -109,6 +127,9 @@ ANIMALS = {
         # Block 1's last tastant (t=89388.7s), not after its first --
         # corrected 2026-09-17, see MS08's comment above.
         licl_time_s = 89388.7 + 5 * 60,
+        # Same Kilosort4/Phy mirror pattern as MS08 -- see TODO.md "Mirrored the
+        # same minimal spike-sorted data set for MS09" (2026-09-17).
+        spike_sorted_dir = f'{NAS_PELEG}/MS09/MS09_Spike_Sorted_Data',
     ),
 }
 
@@ -135,6 +156,16 @@ def copy_to_share_safely(local_path, nas_dir):
     twice in a row, 2026-09-17. Verifying via a retry loop instead of an
     instant crash, and only ever writing full content to a throwaway temp
     name, avoids repeating that failure mode against the real filename.
+
+    Second bug found 2026-09-22 (NeuralAnalysis/cluster_responsiveness.py,
+    re-running against output that already existed on the share from a prior
+    run): `os.replace` is supposed to atomically overwrite `dest` if it
+    already exists, per POSIX -- but over this gvfs-SMB mount it raised
+    `FileExistsError` instead, killing a 27-minute run at the copy step,
+    after all the real computation had already finished locally. Falling
+    back to an explicit remove-then-rename handles that mount's rename
+    semantics without weakening the atomicity guarantee on a normal
+    filesystem (where the `except` branch simply never triggers).
     """
     dest = os.path.join(nas_dir, os.path.basename(local_path))
     tmp_dest = os.path.join(nas_dir, f'.tmp_{os.path.basename(local_path)}')
@@ -150,7 +181,11 @@ def copy_to_share_safely(local_path, nas_dir):
               f'retries -- leaving it in place rather than renaming over {dest}.')
         return
 
-    os.replace(tmp_dest, dest)
+    try:
+        os.replace(tmp_dest, dest)
+    except FileExistsError:
+        os.remove(dest)
+        os.replace(tmp_dest, dest)
 
 
 def main():
