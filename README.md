@@ -177,7 +177,17 @@ novel for them.
     `SleepAnalysis/MS_buzcode_analysis.py` rather than redefining them.
 - **`Registration/`** — `lightsheet_to_tiff.py`: converts lightsheet microscopy
   channel data to TIFF, likely for histological verification of probe/fiber
-  placement.
+  placement. `registration_status.md` — status/debugging log for registering
+  dye-labeled cleared brains (MS19/MS21/MS23) to the Princeton RAtlas (PRA)
+  common coordinate framework, to verify claimed electrode placement (e.g.
+  GC); the actual pipeline/atlas/outputs live on `/mnt/tnvme/peleg_*_registration/`
+  and `Z:\Peleg\<animal>\...`, not in this repo — see that file before
+  starting new registration work. `view_ms19_registration.py` /
+  `view_ms21_registration.py` — standalone napari viewer scripts (one per
+  animal, deliberately not shared/generalized) meant to be run on Peleg's own
+  Windows machine against the mapped NAS drive, not through Claude Code.
+  `atlas_labels/` — the WHS v4 atlas's region ID→name table
+  (`parse_whs_labels.py` + `whs_v4_labels.csv`).
 - **`Articles/`** — the literature backbone (see below).
 
 ## Scientific background
