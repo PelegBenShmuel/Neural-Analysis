@@ -178,6 +178,19 @@ file/size combination — if it recurs for other animals, reach for
 `memmap()` first rather than re-debugging from scratch. Both viewer scripts
 already use `memmap()` for this file.
 
+**Windows security quirk found:** `viewer.add_labels(...)` can fail with
+`ImportError: DLL load failed while importing conversion: An Application
+Control policy has blocked this file` — napari's Labels layer transitively
+imports pandas, and Windows 11's **Smart App Control** (Settings → Windows
+Security → App & browser control) blocked one of pandas's compiled `.pyd`
+files on Peleg's machine. `viewer.add_image`/`tifffile` alone never hit this
+(no pandas import needed) — only `add_labels` did. Fixed via Windows
+Security → **Protection history** → find the blocked-file event → allow it
+for this device, rather than disabling Smart App Control entirely (which
+Microsoft only lets you turn back on via a clean Windows reinstall — a much
+worse trade for a one-file problem). If this recurs on a different Windows
+machine, check Protection history first.
+
 **Scripts are deliberately separate per animal, not a shared config-dict
 abstraction** — built the dict version first, but Peleg explicitly asked
 for two clean standalone hardcoded scripts instead ("each one a clean path,
@@ -204,6 +217,30 @@ it computes the true 3D distance in mm live. Not yet compared against the
 real surgical measurement — Peleg said to set that comparison aside for now
 in favor of the napari/region-lookup approach, so the tool is built but the
 actual length discrepancy is still open.
+
+## Gotcha: array size ≠ physical brain size
+
+Came up when Peleg asked how many mm separate consecutive slices in napari's
+horizontal view. The voxel size answer is simple and reliable: **25 µm
+(0.025 mm) between any two adjacent slices, in all three anatomical planes**
+— both the atlas and every animal's registered volume were deliberately
+resampled to 25 µm *isotropic* resolution (same in X/Y/Z), confirmed both by
+the PRA paper's own abstract ("25 μm resolution") and by the downsampling
+logs' achieved voxel size. Since it's isotropic, this holds regardless of
+which of the three planes (sagittal/coronal/horizontal) you're scrolling.
+
+**But total-slice-count × 0.025 mm is *not* the brain's physical size** —
+the array is a padded bounding box, not a tight crop around the tissue.
+Checked this directly on `PRA.tif` (shape `618×1150×355`): naively
+multiplying the full 1150-slice AP axis by 25 µm gives 28.75 mm, but the
+actual non-background tissue only spans slices ~200–1149 (~950 slices ≈
+23.8 mm) — confirmed anatomically plausible via an independent volume
+cross-check (ellipsoid approximation using the atlas's own measured AP ×
+ML × DV extents ≈ 1600 mm³, close to the ~1765 mm³ published average adult
+rat brain volume; a genuinely larger AP extent would overshoot that badly).
+**Always measure where real tissue starts/ends (threshold out background)
+before converting a slice range to a physical distance** — don't just use
+the full array dimension.
 
 ## Current status / not yet done
 
