@@ -124,6 +124,86 @@ Concrete follow-ups:
       will be propagated there. Leave the folder as-is on disk; don't delete it
       unless asked.
 
+## Data inventory — all rats (as of 2026-09-24)
+
+Goal set 2026-09-24: every rat with a folder in `Z:\Peleg` gets (a) its full
+LF band on the **NPdata3** 10TB disk and (b) a `MS_<NN>_Raw_Data\` folder
+matching the MS08/MS09/MS11 template. Which physical disk holds each rat's
+raw recording is documented in `Z:\Mai\disk_contents.md` (by disk serial).
+
+**`MS_<NN>_Raw_Data\` template** (learned from MS08/MS09/MS11):
+`<run>_t0.imec0.lf.bin` + `.lf.meta`; `<run>_tcat.nidq.xd_0_{1,2,3,4}_0[_corr].txt`
+(Water / Sucrose / NaCl / CA event times; `_corr` = TPrime-corrected onto the
+probe clock); `<run>_tcat.nidq.xd_0_7_0[_corr].txt` (camera-frame sync);
+the session `.mp4`; `<animal>_VideoMovement.npy`. Mai's source videos live in
+`Z:\Mai\vids\<rat>\`; nidq files in `Z:\Mai\MS<NN>\<run>\`.
+
+**MS16 and MS19 excluded and deleted from `Z:\Peleg` (2026-09-24)** — per
+Mai's `track.txt`: MS16 never ran the protocol (head-fixer failures, one
+~8.6h session, perfused); MS19's recording was stopped on Training day before
+LiCl (bad signal, rat died under anesthesia). MS19's LF copy on NPdata3 was
+deleted too; its original raw data is untouched on Mai's disk
+WD-WX22A82N3LLN.
+
+| Rat | nidq 1–4 | xd_0_7 | mp4 | VideoMovement | lf.bin+meta on NPdata3 |
+|---|---|---|---|---|---|
+| MS08 | ✅ | ✅ corr | ❌ (Peleg copying) | ✅ | ⏳ Peleg copying (`MS08\`) |
+| MS09 | ✅ | ✅ corr | ✅ | ✅ | ⏳ Peleg copying |
+| MS11 | ✅ | uncorrected only | ✅ | ⏳ running | ⏳ Peleg copying |
+| MS14 | ✅ | ⚠️ corr truncated | ✅ | ❌ | ✅ |
+| MS15 | ✅ | ✅ corr | ❌ not found | ❌ | ❌ disk 91P0A0FTFWTG |
+| MS18 | ✅ | ✅ | ✅ | ❌ | ❌ disk 72K0A087FWTG |
+| MS20 | ✅ | ❌ | ✅ | ❌ | ❌ disk ZRS04CJG |
+| MS21 | ✅ | ✅ | ✅ | ❌ | ❌ disk ZRS04CJG |
+| MS22 | ✅ | ✅ | ❌ (Peleg copying) | ❌ | ❌ disk NPdata2 |
+| MS23 | ✅ | ✅ | ❌ (Peleg copying) | ❌ | ❌ disk Y190A1K8FWTG |
+| MS24 | hab3toExt only | ✅ hab3toExt | ❌ ×2 (Peleg copying) | ❌ | ✅ hab3toExt · ❌ CTAtoExt (disk 91P0A0FTFWTG) |
+| MS25 | ✅ hab3toExt | ✅ | ❌ ×2 (Peleg copying) | ❌ | ❌ external SanDisk SSD |
+
+Follow-ups:
+
+- [ ] **Finish the NPdata3 LF collection** — insert each remaining disk
+      (see last column) and copy `lf.bin` + `lf.meta`; verify MS08/MS09/MS11
+      (Peleg's own copies, in progress) against their `.meta` `fileSizeBytes`
+      once done. Copy **one file at a time** — parallel copies onto the same
+      HDD (or reading the same source HDD) dropped throughput to ~13 MB/s.
+- [ ] **Videos for MS08, MS22–MS25** — Peleg is copying these directly via
+      the NAS's own interface (NAS→NAS through this machine is very slow).
+      A partial `Z:\Peleg\MS08\MS_08_Raw_Data\ms8-hab3-exp.mp4` (26.1 of
+      53 GB) left over from Claude's stopped copy needs deleting/overwriting.
+      MS21's re-copied video matches the source size exactly; its full byte
+      check was stopped partway.
+- [ ] **MS15's video** — not on the NAS; likely on the external SanDisk SSD
+      (`extreme_ssd`, "Mai behaviour videos") or disk 91P0A0FTFWTG.
+- [ ] **MS24 CTAtoExt nidq files** — exist in `Z:\Mai\MS24\MS24_CTAtoExt_g0\`,
+      not yet copied to `Z:\Peleg\MS24\MS_24_Raw_Data\`.
+- [ ] **MS14 `xd_0_7_0_corr.txt` is truncated** — covers only up to
+      61,844s (~17h) of 262,452s; the uncorrected `xd_0_7_0.txt` is complete.
+      Use the uncorrected file, or re-run TPrime.
+- [ ] **MS20 `xd_0_7`** — missing on the NAS too; may be on disk ZRS04CJG.
+- [ ] **MS11 `xd_0_7_0_corr.txt`** — doesn't exist anywhere (Mai's TPrime run
+      only corrected lines 1–4; no Linux TPrime binary found). Recommended:
+      keep using the uncorrected file (the scripts already do). Decision
+      still Peleg's.
+- [ ] **`MS11_VideoMovement.npy`** — being generated 2026-09-24 in tmux
+      session `ms11vid` (~17 min per video hour, ~20h total) straight into
+      `Z:\Peleg\MS11\MS_11_Raw_Data\`. Once it lands, add `video_file` to
+      MS11's `ANIMALS` entries and re-run `sleep_sanity_check.py MS11`.
+- [ ] **VideoMovement for every other rat** — only MS08/MS09 (and soon MS11)
+      have one; ~20h compute per rat.
+- [ ] **MS18 `Ext2End_v3` files** — all of them (lf.bin, meta, nidq, mp4,
+      csv) disappeared from `Z:\Peleg\MS18\MS_18_Raw_Data\` at 15:12 on
+      2026-09-24; not done by Claude. Confirm it was intentional (originals
+      are still in `Z:\Mai`).
+- [ ] **MS19 group label** — Mai's `track.txt` calls MS19 "control" (moot
+      now that it's excluded, but the README's Control list is MS15/MS18/MS20).
+- [x] ~~MS21 registration viewer~~ — fixed 2026-09-24 after MS19's deletion
+      removed the atlas it used: the atlas now lives in a shared
+      `Z:\Peleg\Atlas\` (PRA.tif, PRA_WHS_v4_anns.tif, whs_v4_labels.csv),
+      and `view_ms21_registration.py`'s `BASE` was updated for MS21's
+      reorganized NAS folder (`MS21_Registartion_data\`). NAS copy re-synced.
+      `view_ms19_registration.py` removed from the repo.
+
 ## Ready to start
 
 - [ ] **Sleep-architecture comparison across the 3 days** — quantify WAKE/NREM/REM
@@ -406,3 +486,12 @@ Concrete follow-ups:
       asleep" (with a 60min reference line and the 24h total in the panel
       title). Regenerated and re-synced for MS08 (11.83h/24h total), MS09
       (10.82h/24h), and MS11 (12.02h/24h) (2026-09-22).
+- [x] **Data-collection day (2026-09-24)** — learned the lab's hot-swap
+      disk procedure (`sudo labdisk mount/umount`, see README "Data
+      locations"); located every rat's raw disk via `Z:\Mai\disk_contents.md`;
+      copied matching `lf.meta` files for MS08/MS09/MS11/MS14 and the full
+      MS24 hab3toExt `lf.bin`+`meta` (from `diskh2`) onto NPdata3; audited
+      every `MS_<NN>_Raw_Data\` against the MS08/MS09/MS11 template (table in
+      "Data inventory — all rats" above); excluded and deleted MS16/MS19;
+      moved the shared registration atlas to `Z:\Peleg\Atlas\` and fixed the
+      MS21 viewer.

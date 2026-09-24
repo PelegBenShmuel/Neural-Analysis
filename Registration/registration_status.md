@@ -33,13 +33,14 @@ animals, at `peleg_MS19_registration/PRA/`. The atlas volumes (`PRA.tif`,
   WHS v4 atlas's region ID → name table (see "Atlas region labels" below).
 
 **On the NAS** (`Z:\Peleg\`, i.e. `smb://anannas/data/Peleg`):
-- `MS19\final_MS_19 Registration\` — MS19's full package: `result_Order5.tif`,
-  `atlas\` (PRA.tif, PRA_WHS_v4_anns.tif, whs_v4_labels.csv — the shared
-  atlas copy, kept here rather than duplicated per animal), and
-  `view_registration_windows.py` (synced copy of this repo's
-  `view_ms19_registration.py`).
-- `MS21\MS21_Registration\` — same idea for MS21 (its own `result_Order5.tif`
-  + synced copy of `view_ms21_registration.py`; reuses MS19's atlas folder).
+- `Atlas\` — the shared, animal-independent atlas copy (PRA.tif,
+  PRA_WHS_v4_anns.tif, whs_v4_labels.csv), used by the viewer scripts.
+  Created 2026-09-24 from `/mnt/tnvme/peleg_MS19_registration/atlas/`.
+- `MS19\` — **deleted 2026-09-24** (MS19 excluded from the study), including
+  its registration package and the atlas copy that used to live there.
+  The local working dir on `/mnt/tnvme/peleg_MS19_registration/` is untouched.
+- `MS21\MS21_Registration\MS21_Registartion_data\` — MS21's own `result_Order5.tif` + synced copy of
+  `view_ms21_registration.py` (atlas from `Z:\Peleg\Atlas\`).
 - `WHS_SD_rat_atlas_v4_pack.zip` — sitting at the top of `Z:\Peleg\`,
   contains the official WHS v4 label file (see below).
 
@@ -122,7 +123,7 @@ sitting on the NAS: `Z:\Peleg\WHS_SD_rat_atlas_v4_pack.zip` contains
 `WHS_SD_rat_atlas_v4.label`. Parsed via
 `Registration/atlas_labels/parse_whs_labels.py` into
 `Registration/atlas_labels/whs_v4_labels.csv` (223 labels; also copied to
-`Z:\Peleg\MS19\final_MS_19 Registration\atlas\` for the viewer scripts).
+`Z:\Peleg\Atlas\` for the viewer scripts).
 
 **Rat GC is not a separately-named structure in this atlas** — anatomically
 it corresponds to the granular/dysgranular insular cortex. Candidate region

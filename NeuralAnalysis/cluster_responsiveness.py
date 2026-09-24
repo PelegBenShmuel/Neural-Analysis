@@ -2,7 +2,7 @@
 Per-cluster taste-responsiveness analysis for one animal's Training day:
 builds a PSTH (raster + rate curve, colored by taste) for every "good"
 Kilosort/Phy unit in each of the 7 Training-day blocks, and classifies each
-(unit x taste x block) as responsive or not via two independent tests.
+(unit x taste x block) as responsive or not via three independent tests.
 
 Built entirely from raw spike-sorter output -- spike_times.npy,
 spike_clusters.npy, cluster_group.tsv (Phy curation label, "good" units
@@ -22,16 +22,24 @@ during a Claude session (2026-09-16 to 2026-09-22); this is that work
 consolidated into the repo, generalized for reuse on the next animal (MS09
 next -- see TODO.md).
 
-Two independent responsiveness tests are computed per (cluster x taste x
+Three independent responsiveness tests are computed per (cluster x taste x
 block), rather than trusting one method alone (see TODO.md "Built a
 from-scratch PSTH..." entry for the full rationale and the 85% agreement
-rate found on MS08):
+rate found on MS08 between the first two):
   - ZETA test (zetapy.zetatest, Montijn et al. 2021) -- parameter-free, most
     sensitive to a real but temporally localized/jittery response. Requires
     the `np_analysis` conda env (has zetapy + openpyxl; peleg_env doesn't).
   - Repeated-measures ANOVA (statsmodels.stats.anova.AnovaRM) -- main effect
     of 250ms time-bin (Piette et al. 2012-style binning), the same
-    statistical family already used in this project's own literature.
+    statistical family already used in this project's own literature. Note
+    this is a one-way ANOVA on time-bin only (within=["bin"]), testing
+    responsiveness for one taste at a time -- NOT the taste x time
+    specificity design the Piette et al. paper itself used the test for.
+  - Paired t-test (scipy.stats.ttest_rel) -- per trial, firing rate in a 1s
+    pre-stimulus baseline vs the 2.5s post-stimulus evoked window (same
+    window ZETA/ANOVA use), paired across trials. The simplest of the three
+    tests; kept as an independent third check, not a replacement for the
+    other two.
 
 Known limitation: ZETA can fail to compute on a very low-firing-rate unit
 (too few spikes in the analysis window) -- this is recorded explicitly here
@@ -62,6 +70,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from statsmodels.stats.anova import AnovaRM
+from scipy.stats import ttest_rel
 from zetapy import zetatest
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -75,7 +84,7 @@ PSTH_BIN = 0.1             # PSTH plotting bin width (s)
 ANOVA_BIN = 0.25           # repeated-measures ANOVA bin width (s), Piette et al.-style
 ZETA_DUR = 2.5             # post-event window ZETA/ANOVA evaluate (s)
 GAP_THRESH = 1000.0        # seconds; a gap bigger than this starts a new taste-delivery block
-ALPHA = 0.05               # significance threshold for both tests
+ALPHA = 0.05               # significance threshold for all three tests
 ZETA_RESAMPLES = 1000
 
 BLOCK_COLORS = {  # for the xlsx background shading, one color per Training-day block
@@ -195,6 +204,35 @@ def run_anova(neuron_spikes, event_times):
         return None
 
 
+def run_ttest(neuron_spikes, event_times):
+    """Paired t-test: per trial, firing rate (Hz) in the pre-stimulus
+    baseline window (WINDOW[0] to 0) vs the post-stimulus evoked window (0
+    to WINDOW[1]) -- the same 2.5s post-stimulus window ZETA/ANOVA use,
+    paired across trials. Baseline and evoked windows have different
+    durations (1.0s vs 2.5s), so counts are converted to rate before
+    comparing, not compared as raw counts. This is the simple method Peleg
+    was taught first, kept deliberately separate from ZETA/ANOVA as a third
+    independent test (not a replacement for either)."""
+    if len(event_times) < 3:
+        return None
+    baseline_dur = -WINDOW[0]
+    evoked_dur = WINDOW[1]
+    baseline_rates, evoked_rates = [], []
+    for ev in event_times:
+        rel = neuron_spikes - ev
+        baseline_rates.append(np.sum((rel >= WINDOW[0]) & (rel < 0)) / baseline_dur)
+        evoked_rates.append(np.sum((rel >= 0) & (rel < WINDOW[1])) / evoked_dur)
+    baseline_rates = np.array(baseline_rates, dtype=float)
+    evoked_rates = np.array(evoked_rates, dtype=float)
+    if np.all(baseline_rates == evoked_rates):
+        return 1.0  # no trial-to-trial difference: nothing for the test to find
+    try:
+        _, p = ttest_rel(evoked_rates, baseline_rates)
+        return float(p)
+    except Exception:
+        return None
+
+
 # ── Per-cluster PSTH + responsiveness table ──────────────────────────────────
 def build_cluster_outputs(cluster_id, neuron_spikes_sec, events_by_taste, all_events, training_blocks, cluster_dir):
     os.makedirs(cluster_dir, exist_ok=True)
@@ -223,10 +261,12 @@ def build_cluster_outputs(cluster_id, neuron_spikes_sec, events_by_taste, all_ev
 
             zeta_p, zeta_valid = run_zeta(neuron_spikes_sec, events)
             anova_p = run_anova(neuron_spikes_sec, events)
+            ttest_p = run_ttest(neuron_spikes_sec, events)
             csv_rows.append({
                 "block": block_num, "taste": taste, "n_trials": len(events),
                 "zeta_p": zeta_p, "responsive_zeta": (zeta_p is not None and zeta_p < ALPHA) if zeta_valid else None,
                 "anova_p": anova_p, "responsive_anova": (anova_p is not None and anova_p < ALPHA),
+                "ttest_p": ttest_p, "responsive_ttest": (ttest_p is not None and ttest_p < ALPHA),
             })
 
             ax = axes[j]
@@ -251,7 +291,8 @@ def build_cluster_outputs(cluster_id, neuron_spikes_sec, events_by_taste, all_ev
         plt.close(fig)
 
     csv_path = f"{cluster_dir}/cluster{cluster_id}_responsiveness_by_taste_and_block.csv"
-    fieldnames = ["block", "taste", "n_trials", "zeta_p", "responsive_zeta", "anova_p", "responsive_anova"]
+    fieldnames = ["block", "taste", "n_trials", "zeta_p", "responsive_zeta", "anova_p", "responsive_anova",
+                  "ttest_p", "responsive_ttest"]
     with open(csv_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -288,9 +329,9 @@ def make_xlsx(csv_path, fieldnames):
             raw = row[name]
             if name in ("block", "n_trials"):
                 value = int(raw)
-            elif name in ("zeta_p", "anova_p"):
+            elif name in ("zeta_p", "anova_p", "ttest_p"):
                 value = float(raw) if raw not in ("", "None") else None
-            elif name in ("responsive_zeta", "responsive_anova"):
+            elif name in ("responsive_zeta", "responsive_anova", "responsive_ttest"):
                 value = {"True": True, "False": False, "None": None, "": None}[raw]
             else:
                 value = raw
@@ -302,7 +343,8 @@ def make_xlsx(csv_path, fieldnames):
                 cell.alignment = Alignment(horizontal="center")
 
     widths = {"block": 8, "taste": 12, "n_trials": 10, "zeta_p": 12,
-              "responsive_zeta": 16, "anova_p": 12, "responsive_anova": 17}
+              "responsive_zeta": 16, "anova_p": 12, "responsive_anova": 17,
+              "ttest_p": 12, "responsive_ttest": 17}
     for col_idx, name in enumerate(fieldnames, start=1):
         ws.column_dimensions[ws.cell(row=1, column=col_idx).column_letter].width = widths.get(name, 12)
 

@@ -21,10 +21,10 @@ import numpy as np
 import tifffile as tf
 import napari
 
-BASE = r"Z:\Peleg\MS21\MS21_Registration"
-# Atlas is animal-independent -- kept in one place (MS19's folder, where it
-# was first copied) rather than duplicated per animal.
-ATLAS_BASE = r"Z:\Peleg\MS19\final_MS_19 Registration\atlas"
+BASE = r"Z:\Peleg\MS21\MS21_Registration\MS21_Registartion_data"
+# Atlas is animal-independent -- kept in one shared place rather than
+# duplicated per animal (was under MS19's folder until MS19 was excluded).
+ATLAS_BASE = r"Z:\Peleg\Atlas"
 
 print("Loading volumes...", flush=True)
 registered = tf.imread(BASE + r"\registration_output_order5\result_Order5.tif")

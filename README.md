@@ -133,6 +133,33 @@ This matters for interpretation: any GC/sleep effect seen in a Control/Fam
 animal should *not* be attributed to CTA learning itself, since sucrose wasn't
 novel for them.
 
+**Excluded (2026-09-24): MS16 and MS19** — neither completed the protocol
+(per Mai's `Z:\Mai\MS<NN>\track.txt`: MS16 had repeated head-fixer failures
+and only one ~8.6h session before perfusion; MS19's recording was stopped on
+Training day before LiCl and the rat died under anesthesia). Their
+`Z:\Peleg` folders were deleted; don't include them in per-animal loops.
+Remaining study animals with `Z:\Peleg` folders: MS08, MS09, MS11, MS14,
+MS15, MS18, MS20–MS25.
+
+## Data locations
+
+- **`Z:\Mai\disk_contents.md`** — Mai's inventory of which physical disk
+  (by serial number) holds each rat's raw recording. Start here before
+  looking for any raw file.
+- **NPdata3** (10TB HGST, serial JEH8AA4N) — being filled with every study
+  rat's LF band (`lf.bin` + `lf.meta`), one copy per rat. Status per rat is
+  tracked in TODO.md ("Data inventory — all rats").
+- **`Z:\Peleg\MS<NN>\MS_<NN>_Raw_Data\`** — per-rat working copy, same
+  template for every rat: LF band, nidq event files (`xd_0_1..4` =
+  Water/Sucrose/NaCl/CA, `xd_0_7` = camera-frame sync; `_corr` =
+  TPrime-corrected), the session `.mp4` (source: `Z:\Mai\vids\`), and
+  `<animal>_VideoMovement.npy`.
+- **Hot-swap disks** on this machine: `lsblk` to find the partition (device
+  letters change between insertions — identify by size/label/serial), then
+  `sudo labdisk mount /dev/sdXN` (read-only) or `... rw` (the destination),
+  and `sudo labdisk umount /dev/sdXN` before pulling (wait for "safe to pull
+  the disk"). Run long copies in `tmux`, one at a time.
+
 ## Repository layout
 
 - **`SleepAnalysis/`** — sleep scoring and state-related analysis.
@@ -182,10 +209,11 @@ novel for them.
   common coordinate framework, to verify claimed electrode placement (e.g.
   GC); the actual pipeline/atlas/outputs live on `/mnt/tnvme/peleg_*_registration/`
   and `Z:\Peleg\<animal>\...`, not in this repo — see that file before
-  starting new registration work. `view_ms19_registration.py` /
-  `view_ms21_registration.py` — standalone napari viewer scripts (one per
-  animal, deliberately not shared/generalized) meant to be run on Peleg's own
-  Windows machine against the mapped NAS drive, not through Claude Code.
+  starting new registration work. `view_ms21_registration.py` — standalone
+  napari viewer script (one per animal, deliberately not shared/generalized)
+  meant to be run on Peleg's own Windows machine against the mapped NAS
+  drive, not through Claude Code; reads the shared atlas from
+  `Z:\Peleg\Atlas\`. (MS19's viewer was removed with MS19's exclusion.)
   `atlas_labels/` — the WHS v4 atlas's region ID→name table
   (`parse_whs_labels.py` + `whs_v4_labels.csv`).
 - **`Articles/`** — the literature backbone (see below).
