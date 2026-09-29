@@ -216,6 +216,10 @@ Open follow-ups:
 
 Done in this data-collection effort (2026-09-24 → 2026-09-29):
 
+- [x] **Final check 2026-09-29:** every `lf.bin` on NPdata3 re-checked against its
+      `.meta` (all match; MS24 `hab3toExt` meta has `fileSizeBytes=0` by design of the
+      04:01 cut-off), every rat's video present (MS15 has none), no partial/temp files
+      left; all source disks unmounted.
 - [x] LF collected on NPdata3 for all 12 rats, one at a time (parallel copies onto
       the same HDD dropped to ~13 MB/s). MS23's LF was mtscomp-compressed on Mai's
       disk Y190A1K8FWTG → decompressed onto NPdata3 (mtscomp installed privately in
