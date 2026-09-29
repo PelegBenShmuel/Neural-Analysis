@@ -149,7 +149,7 @@ MS15, MS18, MS20–MS25.
 - **NPdata3** (10TB HGST, serial JEH8AA4N) — the raw-data archive for the
   study: one folder per rat, `MS<NN>\` with the LF band (`<run>_t0.imec0.lf.bin`
   + `.lf.meta`) and the session video (`.mp4`). Complete for every study rat
-  except MS18's LF (see TODO.md "Data inventory — all rats" for per-rat detail
+  (see TODO.md "Data inventory — all rats" for per-rat detail
   and known gaps).
 - **`Z:\Peleg\MS<NN>\MS_<NN>_Raw_Data\`** — per-rat working folder, same
   template for every rat: nidq event files (`xd_0_1..4` = Water/Sucrose/NaCl/CA,
@@ -162,7 +162,7 @@ MS15, MS18, MS20–MS25.
   `nidq.bin`. Kept on purpose.
 - **Key analysis window** — Training day from 09:00 until 1h after the last
   Training-day taste session (~01:07 next day). The LF covers it fully for
-  every rat except MS18 (no LF) and MS24 (first 57 min missing, before Block 1).
+  every rat except MS24 (first 57 min missing, before Block 1).
 - **`SleepAnalysis/repair_mp4_no_moov.py`** — rebuilds a session video whose
   recording was cut off before the MP4 index was written ("moov atom not
   found"), no re-encoding; used for MS14.

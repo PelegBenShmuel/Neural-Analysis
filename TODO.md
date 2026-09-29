@@ -152,7 +152,7 @@ WD-WX22A82N3LLN.
 | MS11 | ✅ | uncorrected only | ✅ | ⚠️ night 1 black | ✅ 73.0h | ✅ full |
 | MS14 | ✅ | ⚠️ corr truncated → use uncorrected | ✅ `_clean` (repaired) | ✅ | ✅ 72.9h | ✅ full |
 | MS15 | ✅ | ✅ corr | — none recorded | — n/a | ✅ 72.7h | ✅ full |
-| MS18 (hab3toExt only) | ✅ | ✅ | ✅ | ✅ | ❌ **lf.bin missing** | ❌ no LF |
+| MS18 (hab3toExt only) | ✅ | ✅ | ✅ | ✅ | ✅ 48.2h | ✅ full |
 | MS20 | ✅ | ✅ recreated (see note) | ✅ | ✅ | ✅ 72.3h | ✅ full |
 | MS21 | ✅ | ✅ | ✅ | ✅ | ✅ 72.8h | ✅ full |
 | MS22 | ✅ | ✅ | ✅ | ✅ | ✅ 72.7h | ✅ full |
@@ -182,14 +182,9 @@ Training-day session ends** (~01:07 next day; 7 sessions, the last ~23:57–00:0
 
 Open follow-ups:
 
-- [ ] **MS18 lf.bin** — not on its disk 72K0A087FWTG (only `ap.bin` 4 TB +
-      `lf.meta`, which expects 333,894,054,340 B / 48.2h), nor on the SanDisk SSD,
-      local disks or the NAS; no tape is listed for MS18 in Mai's docs (NP8 =
-      MS08/09/15, NP13 = MS22/24). **Ask Mai** which tape holds MS18 and whether that
-      backup includes the LF. Fallback: rebuild LF from the AP — MS18 was recorded
-      with the AP 300 Hz high-pass **off** (`apHipassFlt=0` in imro), so low-pass +
-      decimate 30→2.5 kHz, gain 500→250, to exactly 433,628,642 samples; ~6–8h,
-      needs 72K0A087FWTG connected; label it as rebuilt.
+- [x] ~~MS18 lf.bin~~ — appeared on disk 72K0A087FWTG on 2026-09-29 (restored there
+      after our 2026-09-27 search found only `ap.bin` + `lf.meta`; file date 28/11/2025
+      10:00, size = `.meta` `fileSizeBytes`). Copied to NPdata3 and verified the same day.
 - [ ] **MS21 LiCl time** — not written in `track.txt`; Block 1 is doubled (47
       sucrose / 24 each other: first session lost balloon pressure, repeated at
       rec 25:08), so the "5 min after Block 1's last tastant" rule gives a wrong
@@ -217,11 +212,11 @@ Open follow-ups:
 - [ ] **MS15 has no video** (confirmed by Mai) → movement-based checks use
       EMG-from-LFP only for MS15.
 - [ ] **Next step: buzcode sleep scoring on every rat** — Peleg's plan: once all raw
-      data is in place, run it on all rats. Blocked only on MS18's LF.
+      data is in place, run it on all rats. **Unblocked 2026-09-29: all 12 rats' LF is on NPdata3.**
 
 Done in this data-collection effort (2026-09-24 → 2026-09-29):
 
-- [x] LF collected on NPdata3 for 11/12 rats, one at a time (parallel copies onto
+- [x] LF collected on NPdata3 for all 12 rats, one at a time (parallel copies onto
       the same HDD dropped to ~13 MB/s). MS23's LF was mtscomp-compressed on Mai's
       disk Y190A1K8FWTG → decompressed onto NPdata3 (mtscomp installed privately in
       Claude's scratchpad) and **SHA1 = the original's** stored in Mai's `.lf.ch`.
