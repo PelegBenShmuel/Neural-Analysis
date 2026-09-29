@@ -124,7 +124,7 @@ Concrete follow-ups:
       will be propagated there. Leave the folder as-is on disk; don't delete it
       unless asked.
 
-## Data inventory — all rats (as of 2026-09-24)
+## Data inventory — all rats (as of 2026-09-29)
 
 Goal set 2026-09-24: every rat with a folder in `Z:\Peleg` gets (a) its full
 LF band on the **NPdata3** 10TB disk and (b) a `MS_<NN>_Raw_Data\` folder
@@ -145,64 +145,100 @@ LiCl (bad signal, rat died under anesthesia). MS19's LF copy on NPdata3 was
 deleted too; its original raw data is untouched on Mai's disk
 WD-WX22A82N3LLN.
 
-| Rat | nidq 1–4 | xd_0_7 | mp4 | VideoMovement | lf.bin+meta on NPdata3 |
-|---|---|---|---|---|---|
-| MS08 | ✅ | ✅ corr | ❌ (Peleg copying) | ✅ | ⏳ Peleg copying (`MS08\`) |
-| MS09 | ✅ | ✅ corr | ✅ | ✅ | ⏳ Peleg copying |
-| MS11 | ✅ | uncorrected only | ✅ | ⏳ running | ⏳ Peleg copying |
-| MS14 | ✅ | ⚠️ corr truncated | ✅ | ❌ | ✅ |
-| MS15 | ✅ | ✅ corr | ❌ not found | ❌ | ❌ disk 91P0A0FTFWTG |
-| MS18 | ✅ | ✅ | ✅ | ❌ | ❌ disk 72K0A087FWTG |
-| MS20 | ✅ | ❌ | ✅ | ❌ | ❌ disk ZRS04CJG |
-| MS21 | ✅ | ✅ | ✅ | ❌ | ❌ disk ZRS04CJG |
-| MS22 | ✅ | ✅ | ❌ (Peleg copying) | ❌ | ❌ disk NPdata2 |
-| MS23 | ✅ | ✅ | ❌ (Peleg copying) | ❌ | ❌ disk Y190A1K8FWTG |
-| MS24 | hab3toExt only | ✅ hab3toExt | ❌ ×2 (Peleg copying) | ❌ | ✅ hab3toExt · ❌ CTAtoExt (disk 91P0A0FTFWTG) |
-| MS25 | ✅ hab3toExt | ✅ | ❌ ×2 (Peleg copying) | ❌ | ❌ external SanDisk SSD |
+| Rat | nidq 1–4 | xd_0_7 | Video (on NPdata3) | VideoMovement (`Z:\Peleg`) | LF on NPdata3 | Training-day window* |
+|---|---|---|---|---|---|---|
+| MS08 | ✅ | ✅ corr | ✅ | ✅ | ✅ 73.2h | ✅ full |
+| MS09 | ✅ | ✅ corr | ✅ `_clean` | ✅ | ✅ 72.9h | ✅ full |
+| MS11 | ✅ | uncorrected only | ✅ | ⚠️ night 1 black | ✅ 73.0h | ✅ full |
+| MS14 | ✅ | ⚠️ corr truncated → use uncorrected | ✅ `_clean` (repaired) | ✅ | ✅ 72.9h | ✅ full |
+| MS15 | ✅ | ✅ corr | — none recorded | — n/a | ✅ 72.7h | ✅ full |
+| MS18 (hab3toExt only) | ✅ | ✅ | ✅ | ✅ | ❌ **lf.bin missing** | ❌ no LF |
+| MS20 | ✅ | ✅ recreated (see note) | ✅ | ✅ | ✅ 72.3h | ✅ full |
+| MS21 | ✅ | ✅ | ✅ | ✅ | ✅ 72.8h | ✅ full |
+| MS22 | ✅ | ✅ | ✅ | ✅ | ✅ 72.7h | ✅ full |
+| MS23 | ✅ | ✅ | ✅ | ✅ | ✅ 72.8h (from `.lf.cbin`, SHA1-verified) | ✅ full |
+| MS24 | ✅ hab3toExt + CTAtoExt | ✅ both | ✅ ×2 | ✅ ×2 (`MS24_hab3toExt_` / `MS24_CTAtoExt_VideoMovement.npy`) | ✅ 18.5h + 48.2h | ⚠️ first 57 min missing |
+| MS25 (hab3toExt only) | ✅ | ✅ | ✅ | ✅ | ✅ 40.5h | ✅ full |
 
-Follow-ups:
+\*Peleg's key window (2026-09-29): **09:00 on Training day until 1h after the last
+Training-day session ends** (~01:07 next day; 7 sessions, the last ~23:57–00:08).
 
-- [ ] **Finish the NPdata3 LF collection** — insert each remaining disk
-      (see last column) and copy `lf.bin` + `lf.meta`; verify MS08/MS09/MS11
-      (Peleg's own copies, in progress) against their `.meta` `fileSizeBytes`
-      once done. Copy **one file at a time** — parallel copies onto the same
-      HDD (or reading the same source HDD) dropped throughput to ~13 MB/s.
-- [ ] **Videos for MS08, MS22–MS25** — Peleg is copying these directly via
-      the NAS's own interface (NAS→NAS through this machine is very slow).
-      A partial `Z:\Peleg\MS08\MS_08_Raw_Data\ms8-hab3-exp.mp4` (26.1 of
-      53 GB) left over from Claude's stopped copy needs deleting/overwriting.
-      MS21's re-copied video matches the source size exactly; its full byte
-      check was stopped partway.
-- [ ] **MS15's video** — not on the NAS; likely on the external SanDisk SSD
-      (`extreme_ssd`, "Mai behaviour videos") or disk 91P0A0FTFWTG.
-- [ ] **MS24 CTAtoExt nidq files** — exist in `Z:\Mai\MS24\MS24_CTAtoExt_g0\`,
-      not yet copied to `Z:\Peleg\MS24\MS_24_Raw_Data\`.
-- [ ] **MS14 `xd_0_7_0_corr.txt` is truncated** — covers only up to
-      61,844s (~17h) of 262,452s; the uncorrected `xd_0_7_0.txt` is complete.
-      Use the uncorrected file, or re-run TPrime.
-- [ ] **MS20 `xd_0_7`** — missing on the NAS too; may be on disk ZRS04CJG.
-- [ ] **MS11 `xd_0_7_0_corr.txt`** — doesn't exist anywhere (Mai's TPrime run
-      only corrected lines 1–4; no Linux TPrime binary found). Recommended:
-      keep using the uncorrected file (the scripts already do). Decision
-      still Peleg's.
-- [ ] **`MS11_VideoMovement.npy`** — being generated 2026-09-24 in tmux
-      session `ms11vid` (~17 min per video hour, ~20h total) straight into
-      `Z:\Peleg\MS11\MS_11_Raw_Data\`. Once it lands, add `video_file` to
-      MS11's `ANIMALS` entries and re-run `sleep_sanity_check.py MS11`.
-- [ ] **VideoMovement for every other rat** — only MS08/MS09 (and soon MS11)
-      have one; ~20h compute per rat.
-- [ ] **MS18 `Ext2End_v3` files** — all of them (lf.bin, meta, nidq, mp4,
-      csv) disappeared from `Z:\Peleg\MS18\MS_18_Raw_Data\` at 15:12 on
-      2026-09-24; not done by Claude. Confirm it was intentional (originals
-      are still in `Z:\Mai`).
-- [ ] **MS19 group label** — Mai's `track.txt` calls MS19 "control" (moot
-      now that it's excluded, but the README's Control list is MS15/MS18/MS20).
-- [x] ~~MS21 registration viewer~~ — fixed 2026-09-24 after MS19's deletion
-      removed the atlas it used: the atlas now lives in a shared
-      `Z:\Peleg\Atlas\` (PRA.tif, PRA_WHS_v4_anns.tif, whs_v4_labels.csv),
-      and `view_ms21_registration.py`'s `BASE` was updated for MS21's
-      reorganized NAS folder (`MS21_Registartion_data\`). NAS copy re-synced.
-      `view_ms19_registration.py` removed from the repo.
+**Where things live now (final layout, 2026-09-29):**
+- **NPdata3** (10TB, serial JEH8AA4N): `MS<NN>\<run>_t0.imec0.lf.bin` + `.lf.meta` +
+  the session `.mp4`. Every `lf.bin` checked = `.meta` `fileSizeBytes` (strip the
+  CRLF `\r` first) and head/tail-1GiB md5 = source.
+- **`Z:\Peleg\MS<NN>\MS_<NN>_Raw_Data\`**: nidq event files, `xd_0_7` sync,
+  camera `.csv` where it exists, `<rat>_VideoMovement.npy`. **No videos and no LF
+  here any more** — videos were *moved* to NPdata3 (each byte-verified before the
+  `Z:\Peleg` copy was deleted, ~370 GB freed). MS08/09/11 still also keep their LF
+  in `Z:\Peleg` (they did before this effort).
+- **`diskh2`** local backups (keep, per Peleg): `/media/anan/diskh2/MS<NN>_video/`
+  (MS18, MS20–MS25; MS24 as `MS24_hab3toExt_video` / `MS24_CTAtoExt_video`),
+  `/media/anan/diskh2/MS14/` (repaired MS14 video), `/media/anan/diskh2/MS20_nidq/`
+  (MS20 raw nidq.bin used to recreate line 7).
+- Out of scope by Peleg's decision: anything after the extinction day (MS18
+  `Ext2End_v3`, MS25 `ext2end1`); MS16/MS19 excluded; MS17 never in the protocol
+  (moved to Oren's experiment).
+
+Open follow-ups:
+
+- [ ] **MS18 lf.bin** — not on its disk 72K0A087FWTG (only `ap.bin` 4 TB +
+      `lf.meta`, which expects 333,894,054,340 B / 48.2h), nor on the SanDisk SSD,
+      local disks or the NAS; no tape is listed for MS18 in Mai's docs (NP8 =
+      MS08/09/15, NP13 = MS22/24). **Ask Mai** which tape holds MS18 and whether that
+      backup includes the LF. Fallback: rebuild LF from the AP — MS18 was recorded
+      with the AP 300 Hz high-pass **off** (`apHipassFlt=0` in imro), so low-pass +
+      decimate 30→2.5 kHz, gain 500→250, to exactly 433,628,642 samples; ~6–8h,
+      needs 72K0A087FWTG connected; label it as rebuilt.
+- [ ] **MS21 LiCl time** — not written in `track.txt`; Block 1 is doubled (47
+      sucrose / 24 each other: first session lost balloon pressure, repeated at
+      rec 25:08), so the "5 min after Block 1's last tastant" rule gives a wrong
+      ~10:59. **Ask Mai** for the real injection time before any MS21 LiCl-aligned
+      analysis.
+- [ ] **MS22 Hab3 taste delivery** — per `track.txt` the balloon pressure was zero
+      and in some Hab3 sessions no taste was delivered, but nidq still logs every
+      valve opening (10/block). **Ask Mai** which sessions, or detect from licking
+      / GC responses, before using Hab3 responses as a baseline.
+- [ ] **MS24 Hab3 night gap** — `hab3toExt` LF holds only 18.5h (its meta says
+      24.4h with `fileSizeBytes=0`: recording cut off ~04:00 on 1/7, meta never
+      finalised); `CTAtoExt` starts 09:57. So **no LF 1/7 04:00–09:57** (Hab3 night
+      and the first 57 min of the Training-day window); video is continuous.
+- [ ] **MS25 LF ends at 40.5h** (30/7 02:08) though its video runs 48.1h — the
+      key Training-day window is fully covered; only the rest of that night is missing.
+- [ ] **MS14 `xd_0_7_0_corr.txt` is truncated** (to 61,844 s of 262,452 s) — use the
+      complete uncorrected `xd_0_7_0.txt` (frame k = pulse k for the `_clean` video).
+- [ ] **MS11 `xd_0_7_0_corr.txt`** doesn't exist (Mai's TPrime run only did lines
+      1–4) — keep using the uncorrected file; could be recreated the same way as
+      MS20's if ever needed.
+- [ ] **MS11 video is black for most of night 1** — `MS11_VideoMovement.npy` is ~0
+      for recording hours 13–21 (frames are black; camera/IR off). Treat as
+      *missing*, not rest, in movement-based checks — add a black-frame mask shared
+      by all rats. All other rats checked: no black hours.
+- [ ] **MS15 has no video** (confirmed by Mai) → movement-based checks use
+      EMG-from-LFP only for MS15.
+- [ ] **Next step: buzcode sleep scoring on every rat** — Peleg's plan: once all raw
+      data is in place, run it on all rats. Blocked only on MS18's LF.
+
+Done in this data-collection effort (2026-09-24 → 2026-09-29):
+
+- [x] LF collected on NPdata3 for 11/12 rats, one at a time (parallel copies onto
+      the same HDD dropped to ~13 MB/s). MS23's LF was mtscomp-compressed on Mai's
+      disk Y190A1K8FWTG → decompressed onto NPdata3 (mtscomp installed privately in
+      Claude's scratchpad) and **SHA1 = the original's** stored in Mai's `.lf.ch`.
+- [x] Videos moved to NPdata3 for every rat with a video; `Z:\Peleg` copies deleted
+      only after a full `cmp`. MS09's broken original stays only at Mai.
+- [x] VideoMovement for MS11, MS14, MS18, MS20–MS25 (MS24 as two files), from local
+      `diskh2` copies (faster than over the NAS); each output checked for zeros/NaN.
+- [x] MS14 video repaired (camera ran 12 days, no `moov`) with
+      `SleepAnalysis/repair_mp4_no_moov.py` (SPS/PPS from MS11's same-settings
+      video, no re-encode; `-use_editlist 0` so no frames vanish), trimmed to
+      6,526,137 frames (72.51h), frame k = sync pulse k.
+- [x] MS20 `xd_0_7` recreated from its raw `nidq.bin` (Mai's CatGT skipped line 7);
+      see `MS_20_Raw_Data\MS20_xd_0_7_NOTE.txt`.
+- [x] MS24 `CTAtoExt` nidq (lines 1–4 + 7, `_corr`) copied into `MS_24_Raw_Data\`;
+      MS21/MS22/MS23 camera `.csv` copied.
+- [x] MS16/MS19 excluded and their `Z:\Peleg` folders deleted; the shared
+      registration atlas moved to `Z:\Peleg\Atlas\` and the MS21 viewer fixed.
 
 ## Ready to start
 

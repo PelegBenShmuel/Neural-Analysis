@@ -146,15 +146,27 @@ MS15, MS18, MS20–MS25.
 - **`Z:\Mai\disk_contents.md`** — Mai's inventory of which physical disk
   (by serial number) holds each rat's raw recording. Start here before
   looking for any raw file.
-- **NPdata3** (10TB HGST, serial JEH8AA4N) — being filled with every study
-  rat's LF band (`lf.bin` + `lf.meta`), one copy per rat. Status per rat is
-  tracked in TODO.md ("Data inventory — all rats").
-- **`Z:\Peleg\MS<NN>\MS_<NN>_Raw_Data\`** — per-rat working copy, same
-  template for every rat: LF band, nidq event files (`xd_0_1..4` =
-  Water/Sucrose/NaCl/CA, `xd_0_7` = camera-frame sync; `_corr` =
-  TPrime-corrected), the session `.mp4` (source: `Z:\Mai\vids\`), and
-  `<animal>_VideoMovement.npy`.
-- **Hot-swap disks** on this machine: `lsblk` to find the partition (device
+- **NPdata3** (10TB HGST, serial JEH8AA4N) — the raw-data archive for the
+  study: one folder per rat, `MS<NN>\` with the LF band (`<run>_t0.imec0.lf.bin`
+  + `.lf.meta`) and the session video (`.mp4`). Complete for every study rat
+  except MS18's LF (see TODO.md "Data inventory — all rats" for per-rat detail
+  and known gaps).
+- **`Z:\Peleg\MS<NN>\MS_<NN>_Raw_Data\`** — per-rat working folder, same
+  template for every rat: nidq event files (`xd_0_1..4` = Water/Sucrose/NaCl/CA,
+  `xd_0_7` = camera-frame sync; `_corr` = TPrime-corrected onto the probe
+  clock), the camera `.csv` where one exists, and `<animal>_VideoMovement.npy`.
+  Videos and the LF live on NPdata3, not here (MS08/09/11 keep their older LF
+  copy here too).
+- **Local backups on `diskh2`** — `/media/anan/diskh2/MS<NN>_video/` copies of
+  the videos used for VideoMovement, plus the repaired MS14 video and MS20's raw
+  `nidq.bin`. Kept on purpose.
+- **Key analysis window** — Training day from 09:00 until 1h after the last
+  Training-day taste session (~01:07 next day). The LF covers it fully for
+  every rat except MS18 (no LF) and MS24 (first 57 min missing, before Block 1).
+- **`SleepAnalysis/repair_mp4_no_moov.py`** — rebuilds a session video whose
+  recording was cut off before the MP4 index was written ("moov atom not
+  found"), no re-encoding; used for MS14.
+- **Hot-swap disks** on this machine (Mai's disks are always mounted read-only): `lsblk` to find the partition (device
   letters change between insertions — identify by size/label/serial), then
   `sudo labdisk mount /dev/sdXN` (read-only) or `... rw` (the destination),
   and `sudo labdisk umount /dev/sdXN` before pulling (wait for "safe to pull
@@ -194,6 +206,10 @@ MS15, MS18, MS20–MS25.
     hypnogram figure.
   - `VideoMovement.py` — per-frame movement via MOG2 background subtraction on
     session video, used as a video-based behavioral/EMG-proxy signal.
+  - `repair_mp4_no_moov.py` — rebuilds a session `.mp4` that has no `moov` index
+    (recording cut off abruptly) from its raw H.264 frames, using SPS/PPS from a
+    working video recorded with identical x264 settings; optional trim to N
+    frames. No re-encoding; frame order verified with ffmpeg `framemd5`.
 - **`NeuralAnalysis/`** — spike-level analysis (see "Spike-level analysis"
   above).
   - `cluster_responsiveness.py` — per-(cluster x taste x Training-day-block)
