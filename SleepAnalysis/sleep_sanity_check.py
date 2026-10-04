@@ -69,6 +69,303 @@ ANIMALS = {
         video_file = f'{NAS_PELEG}/MS09/MS_09_Raw_Data/MS09_VideoMovement.npy',
         mov_fps = 25,
     ),
+    'MS25': dict(
+        session   = 'MS25_hab3toExt',
+        mat_file  = '/media/anan/diskh2/MS25/MS25_hab3toExt/MS25_hab3toExt.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS25/MS25_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS24_CTAtoExt': dict(
+        session   = 'MS24_CTAtoExt',
+        mat_file  = '/media/anan/diskh2/MS24/MS24_CTAtoExt/MS24_CTAtoExt.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS24/MS24_CTAtoExt_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS24_hab3toExt': dict(
+        session   = 'MS24_hab3toExt',
+        mat_file  = '/media/anan/diskh2/MS24/MS24_hab3toExt/MS24_hab3toExt.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS24/MS24_hab3toExt_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_hab3toExt_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS23': dict(
+        session   = 'MS23_hab3toExt',
+        mat_file  = '/media/anan/diskh2/MS23/MS23_hab3toExt/MS23_hab3toExt.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS23/MS23_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS22': dict(
+        session   = 'MS22_hab3toExt',
+        mat_file  = '/media/anan/diskh2/MS22/MS22_hab3toExt/MS22_hab3toExt.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS22/MS_22_Raw_Data/MS22_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS22/MS_22_Raw_Data/MS22_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS22/MS_22_Raw_Data/MS22_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS22/MS_22_Raw_Data/MS22_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS22/MS_22_Raw_Data/MS22_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS22/MS22_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS22/MS_22_Raw_Data/MS22_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS21': dict(
+        session   = 'MS21_hab3toExt',
+        mat_file  = '/media/anan/diskh2/MS21/MS21_hab3toExt/MS21_hab3toExt.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS21/MS21_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS20': dict(
+        session   = 'MS20_hab3toExt',
+        mat_file  = '/media/anan/diskh2/MS20/MS20_hab3toExt/MS20_hab3toExt.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS20/MS_20_Raw_Data/MS20_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS20/MS_20_Raw_Data/MS20_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS20/MS_20_Raw_Data/MS20_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS20/MS_20_Raw_Data/MS20_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS20/MS_20_Raw_Data/MS20_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS20/MS20_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS20/MS_20_Raw_Data/MS20_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS18': dict(
+        session   = 'MS18_hab3toExt',
+        mat_file  = '/media/anan/diskh2/MS18/MS18_hab3toExt/MS18_hab3toExt.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS18/MS_18_Raw_Data/MS18_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS18/MS_18_Raw_Data/MS18_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS18/MS_18_Raw_Data/MS18_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS18/MS_18_Raw_Data/MS18_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS18/MS_18_Raw_Data/MS18_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS18/MS18_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS18/MS_18_Raw_Data/MS18_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS15': dict(
+        session   = 'MS15_hab3toExt',
+        mat_file  = '/media/anan/diskh2/MS15/MS15_hab3toExt/MS15_hab3toExt.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS15/MS_15_Raw_Data/MS15_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS15/MS_15_Raw_Data/MS15_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS15/MS_15_Raw_Data/MS15_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS15/MS_15_Raw_Data/MS15_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS15/MS_15_Raw_Data/MS15_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS15/MS15_buzcode_analysis',
+        # No video_file: MS15 has no video (confirmed by Mai) -- REM
+        # plausibility check falls back to EMG-from-LFP only.
+    ),
+    'MS21_manualTH': dict(
+        session   = 'MS21_hab3toExt_manualTH',
+        mat_file  = '/media/anan/diskh2/MS21/MS21_hab3toExt_manualTH/MS21_hab3toExt_manualTH.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS21/MS21_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS21_videocorr': dict(
+        session   = 'MS21_hab3toExt_manualTH_videocorr',
+        mat_file  = '/media/anan/diskh2/MS21/MS21_hab3toExt_manualTH/MS21_hab3toExt_manualTH_videocorr.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS21/MS21_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS21/MS_21_Raw_Data/MS21_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS23_videocorr': dict(
+        session   = 'MS23_hab3toExt_manualTH_videocorr',
+        mat_file  = '/media/anan/diskh2/MS23/MS23_hab3toExt_manualTH/MS23_hab3toExt_manualTH_videocorr.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS23/MS23_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS25_manualTH_videocorr': dict(
+        session   = 'MS25_manualTH_videocorr',
+        mat_file  = '/media/anan/diskh2/MS25/MS25_hab3toExt_manualTH/MS25_manualTH_videocorr.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS25/MS25_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS25_videocorr': dict(
+        session   = 'MS25_hab3toExt_videocorr',
+        mat_file  = '/media/anan/diskh2/MS25/MS25_hab3toExt/MS25_hab3toExt_videocorr.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS25/MS25_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS24_CTAtoExt_videocorr': dict(
+        session   = 'MS24_CTAtoExt_manualTH_videocorr',
+        mat_file  = '/media/anan/diskh2/MS24/MS24_CTAtoExt_manualTH/MS24_CTAtoExt_manualTH_videocorr.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS24/MS24_CTAtoExt_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS14_videocorr': dict(
+        session   = 'MS14_hab3toExt_manualTH_videocorr',
+        mat_file  = '/media/anan/diskh2/MS14/MS14_hab3toExt_manualTH/MS14_hab3toExt_manualTH_videocorr.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_7_0.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS14/MS14_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS23_manualTH': dict(
+        session   = 'MS23_hab3toExt_manualTH',
+        mat_file  = '/media/anan/diskh2/MS23/MS23_hab3toExt_manualTH/MS23_hab3toExt_manualTH.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS23/MS23_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS23/MS_23_Raw_Data/MS23_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS24_CTAtoExt_manualTH': dict(
+        session   = 'MS24_CTAtoExt_manualTH',
+        mat_file  = '/media/anan/diskh2/MS24/MS24_CTAtoExt_manualTH/MS24_CTAtoExt_manualTH.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS24/MS24_CTAtoExt_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS25_manualTH': dict(
+        session   = 'MS25_manualTH',
+        mat_file  = '/media/anan/diskh2/MS25/MS25_hab3toExt_manualTH/MS25_manualTH.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS25/MS25_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS25/MS_25_Raw_Data/MS25_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS14_manualTH': dict(
+        session   = 'MS14_hab3toExt_manualTH',
+        mat_file  = '/media/anan/diskh2/MS14/MS14_hab3toExt_manualTH/MS14_hab3toExt_manualTH.SleepState.states.mat',
+        sync_file = f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_7_0.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS14/MS14_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_VideoMovement.npy',
+        mov_fps = 25,
+    ),
+    'MS14': dict(
+        session   = 'MS14_hab3toExt',
+        mat_file  = '/media/anan/diskh2/MS14/MS14_hab3toExt/MS14_hab3toExt.SleepState.states.mat',
+        # xd_0_7_0_corr.txt is truncated (61,844s of 262,452s) -- use the
+        # complete uncorrected file instead (frame k = pulse k for the
+        # _clean video), per project_data_collection_2026_09 memory.
+        sync_file = f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_7_0.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir = f'{NAS_PELEG}/MS14/MS14_buzcode_analysis',
+        video_file = f'{NAS_PELEG}/MS14/MS_14_Raw_Data/MS14_VideoMovement.npy',
+        mov_fps = 25,
+    ),
     'MS11': dict(
         session   = 'MS11_hab3',
         mat_file  = '/media/anan/diskh2/MS11/MS11_hab3/MS11_hab3.SleepState.states.mat',
@@ -108,7 +405,36 @@ def load_states(mat_file):
         t_clus  = np.array(metrics['t_clus']).flatten()
         motion  = np.array(metrics['motiondata']).flatten()
         mo_thr  = float(np.array(metrics['histsandthreshs/MotionThresh']).flatten()[0])
-    return t, states, bouts, t_clus, motion, mo_thr
+        th_thr  = float(np.array(metrics['histsandthreshs/THthresh']).flatten()[0])
+        th_chan = float(np.array(metrics['THchanID']).flatten()[0])
+    return t, states, bouts, t_clus, motion, mo_thr, th_thr, th_chan
+
+
+def check_theta_threshold(th_thr, th_chan):
+    """buzcode's ClusterStates_GetMetrics.m hard-codes THthresh=0 (and never
+    recomputes REMtimes for that branch -- the recompute line is commented
+    out in buzcode's own source) when it can't find a bimodal split in the
+    theta-ratio histogram, even after widening bins and retrying with NREM
+    excluded. THthresh=0 means the 'thratio > THthresh' REM criterion is
+    satisfied by essentially every sample (thratio is a positive ratio), so
+    REM silently degenerates to 'not moving AND low SW power' -- no real
+    theta signal involved at all. Check this FIRST: if it fires, nothing
+    downstream that depends on REM (proportions, bout stats, even the
+    EMG/video 'plausibility' checks, which only confirm REM-time is quiet --
+    already guaranteed by construction, not an independent check) actually
+    validates REM electrophysiologically.
+    """
+    print('── 0. Theta threshold (does REM mean anything here?) ────────')
+    print(f'  Theta channel {th_chan:.0f}, THthresh={th_thr:.4f}')
+    if th_thr == 0:
+        print('  [FLAG] THthresh is exactly 0 -- buzcode never found a real '
+              'bimodal split in the theta ratio and fell back to its hard-coded '
+              'default. REM is NOT validated by any theta signal here -- it is '
+              'just "not moving and low SW power" by elimination. Treat REM '
+              '(and anything downstream that depends on it) as unreliable '
+              'regardless of how plausible the overall proportions look.')
+    else:
+        print('  [OK] Nonzero threshold -- a real bimodal split was found.')
 
 
 def check_coverage(t, states):
@@ -150,8 +476,13 @@ def check_bouts(bouts):
     durations = {}
     for name in STATE_CODE:
         iv = bouts[name]
-        d = iv[1] - iv[0]
+        d = np.atleast_1d(iv[1] - iv[0]) if iv.size else np.array([])
         durations[name] = d
+        if len(d) == 0:
+            print(f'  {name:5s}:    0 bouts')
+            print(f'  [FLAG] {name} has zero bouts for the whole recording — '
+                  'the theta/SW channel or threshold is almost certainly wrong.')
+            continue
         n_flicker = int((d < FLICKER_S).sum())
         print(f'  {name:5s}: {len(d):4d} bouts | median {np.median(d):6.1f}s '
               f'| mean {d.mean():6.1f}s | max {d.max()/60:5.1f}min | '
@@ -215,10 +546,13 @@ def check_rem_plausibility(t, states, t_clus, motion, mo_thr, video_file, mov_fp
     med = {}
     for name, code in STATE_CODE.items():
         vals = motion_at_state_t[states == code]
-        med[name] = np.median(vals)
+        med[name] = np.median(vals) if len(vals) else np.nan
         print(f'    {name:5s}: median {med[name]:.3f}  '
-              f'(mean {vals.mean():.3f}, n={len(vals)})')
-    if med['REM'] > 0.5 * (med['WAKE'] + med['NREM']):
+              f'(mean {vals.mean():.3f}, n={len(vals)})' if len(vals) else
+              f'    {name:5s}: no samples (0 bouts)')
+    if len(motion_at_state_t[states == STATE_CODE["REM"]]) == 0:
+        print('  [SKIPPED] REM has zero samples -- nothing to cross-check.')
+    elif med['REM'] > 0.5 * (med['WAKE'] + med['NREM']):
         print('  [FLAG] REM epochs have EMG-motion closer to WAKE than NREM — '
               'expected muscle atonia during REM is not showing up; these '
               '"REM" bouts may actually be mislabeled brief WAKE.')
@@ -251,11 +585,13 @@ def check_rem_plausibility(t, states, t_clus, motion, mo_thr, video_file, mov_fp
     vmed = {}
     for name, code in STATE_CODE.items():
         vals = mov_at_t[(states == code) & valid]
-        vmed[name] = np.median(vals)
+        vmed[name] = np.median(vals) if len(vals) else np.nan
         pct_above_wake_thr = 100 * (vals > mov_wake_thr).sum() / len(vals) if len(vals) else np.nan
         print(f'    {name:5s}: median {vmed[name]:6.1f}  '
               f'({pct_above_wake_thr:.1f}% of time above WAKE threshold, n={len(vals)})')
-    if vmed['REM'] > 0.5 * (vmed['WAKE'] + vmed['NREM']):
+    if len(mov_at_t[(states == STATE_CODE["REM"]) & valid]) == 0:
+        print('  [SKIPPED] REM has zero samples -- nothing to cross-check.')
+    elif vmed['REM'] > 0.5 * (vmed['WAKE'] + vmed['NREM']):
         print('  [FLAG] REM epochs move nearly as much as WAKE on video — '
               'independent confirmation that these REM bouts look like '
               'active behavior, not real muscle-atonia REM.')
@@ -268,8 +604,14 @@ def check_rem_plausibility(t, states, t_clus, motion, mo_thr, video_file, mov_fp
 def check_rem_fragmentation(bouts, states, t, merge_gap_s=30):
     print('\n── 6. REM bout fragmentation ─────────────────────────────────')
     iv = bouts['REM']
-    order = np.argsort(iv[0])
-    starts, stops = iv[0][order], iv[1][order]
+    starts_raw = np.atleast_1d(iv[0]) if iv.size else np.array([])
+    stops_raw  = np.atleast_1d(iv[1]) if iv.size else np.array([])
+    if len(starts_raw) < 2:
+        print(f'  [SKIPPED] only {len(starts_raw)} REM bout(s) -- no inter-bout '
+              'gaps to check.')
+        return starts_raw  # 0 or 1 bout: nothing to fragment/merge
+    order = np.argsort(starts_raw)
+    starts, stops = starts_raw[order], stops_raw[order]
     n = len(starts)
     gaps = starts[1:] - stops[:-1]
     print(f'  {n} REM bouts, {n-1} inter-bout gaps.')
@@ -367,7 +709,8 @@ def main():
     cfg = ANIMALS[animal]
     print(f'=== Sleep sanity check: {animal} ({cfg["session"]}) ===\n')
 
-    t, states, bouts, t_clus, motion, mo_thr = load_states(cfg['mat_file'])
+    t, states, bouts, t_clus, motion, mo_thr, th_thr, th_chan = load_states(cfg['mat_file'])
+    check_theta_threshold(th_thr, th_chan)
     check_coverage(t, states)
     check_proportions(t, states)
     durations = check_bouts(bouts)

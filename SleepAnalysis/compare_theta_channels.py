@@ -17,12 +17,24 @@ import os
 
 from sleep_sanity_check import (
     ANIMALS, STATE_CODE, STATE_COL, EXPECTED_PCT,
-    load_states, check_coverage, check_proportions, check_bouts,
-    check_taste_alignment, check_rem_plausibility, check_rem_fragmentation,
-    NAS_PELEG,
+    load_states, check_theta_threshold, check_coverage, check_proportions,
+    check_bouts, check_taste_alignment, check_rem_plausibility,
+    check_rem_fragmentation, NAS_PELEG,
 )
 
 COMPARISONS = {
+    'MS21_ch65_vs_ch214': dict(
+        animal  = 'MS21',
+        out_dir = f'{NAS_PELEG}/MS21/MS21_theta_channel_comparison',
+        variants = [
+            dict(label='ch65',
+                 mat_file='/media/anan/diskh2/MS21/MS21_hab3toExt_ch65/'
+                          'MS21_hab3toExt_ch65.SleepState.states.mat'),
+            dict(label='ch214 (accepted, find_theta_channel.m)',
+                 mat_file='/media/anan/diskh2/MS21/MS21_hab3toExt/'
+                          'MS21_hab3toExt.SleepState.states.mat'),
+        ],
+    ),
     'MS11_ch65_vs_ch81': dict(
         animal  = 'MS11',
         out_dir = f'{NAS_PELEG}/MS11/MS11_theta_channel_comparison',
@@ -58,7 +70,8 @@ def main():
     results = []
     for v in cmp_cfg['variants']:
         print(f'\n{"="*70}\n{animal} -- {v["label"]}  ({v["mat_file"]})\n{"="*70}')
-        t, states, bouts, t_clus, motion, mo_thr = load_states(v['mat_file'])
+        t, states, bouts, t_clus, motion, mo_thr, th_thr, th_chan = load_states(v['mat_file'])
+        check_theta_threshold(th_thr, th_chan)
         check_coverage(t, states)
         pct = check_proportions(t, states)
         durations = check_bouts(bouts)

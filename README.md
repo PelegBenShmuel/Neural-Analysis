@@ -181,17 +181,33 @@ MS15, MS18, MS20–MS25.
   - `MS_buzcode_analysis.py` — loads buzcode sleep-state output + LFP + video
     movement + taste-event timestamps and visualizes them together, hourly.
     Takes an `ANIMAL` argument and reads all paths/channels/LiCl time from an
-    `ANIMALS` config dict (MS08, MS09, MS11) — one script, not a copy per
-    animal (see "How we work together").
-  - `sleep_sanity_check.py` — coverage/state-proportion/bout-duration/
-    taste-alignment/REM-plausibility/fragmentation checks for one animal's
-    buzcode output, run before trusting it for anything downstream. Same
-    `ANIMAL`-argument convention.
+    `ANIMALS` config dict (now covers MS08/09/11/14/21/22/23/24(x2)/25, plus
+    each rat's `_manualTH`/`_videocorr` variant where the theta threshold
+    needed correcting — see "Known limitations" below) — one script, not a
+    copy per animal (see "How we work together").
+  - `sleep_sanity_check.py` — coverage/**theta-threshold-validity**/
+    state-proportion/bout-duration/taste-alignment/REM-plausibility/
+    fragmentation checks for one animal's buzcode output, run before trusting
+    it for anything downstream. Same `ANIMAL`-argument convention. The
+    theta-threshold check (`check_theta_threshold()`) runs first and is load-
+    bearing — see "Known limitations".
   - `run_sleep_score.m` / `find_theta_channel.m` — the actual
     `SleepScoreMaster` invocation and a memory-safe (bounded-window, capped-
     worker) full-channel theta search, respectively. Same per-animal
     `ANIMALS`-struct convention as the Python scripts, switched via an
     `ANIMAL` variable.
+  - `manual_theta_threshold.m` — forces a manually-chosen `THthresh` by
+    reusing an already-scored rat's cached metrics and re-running only the
+    (fast) clustering step, instead of a full 2h+ LFP-reload rescore. Used
+    when buzcode's automatic threshold picker degenerates (see "Known
+    limitations"); standard choice is that rat's own theta-ratio distribution
+    `mean + 1*SD`.
+  - `video_correct_rem.py` — post-hoc correction: reclassifies any REM-
+    labeled timepoint whose independent video-movement signal is too high
+    (same per-animal threshold `sleep_sanity_check.py` computes) back to
+    WAKE. Rebuilds the WAKE/NREM/REM interval lists from the corrected
+    per-sample states. Run after `manual_theta_threshold.m` as the standard
+    combined fix.
   - `training_day_sleep_state_extraction.py` — cuts an animal's buzcode
     classification down to just the Training day (9AM-9AM around LiCl
     injection), reporting WAKE/NREM/REM by Arieli et al. (2022) phase.
@@ -398,6 +414,39 @@ the behavioral basis for "REM sleep is needed to modify the engram, not read it.
   MS11_theta_channel_comparison\` (see `SleepAnalysis/compare_theta_channels.py`),
   in case an independent video-movement trace for MS11 is worth building
   later to settle it either way.
+- **buzcode silently fakes a theta threshold when it can't find one — found
+  2026-10-04, affects most of the cohort, not just MS09/MS11.** Root cause,
+  in buzcode's own source (`ClusterStates_GetMetrics.m` ~line 347): when no
+  bimodal split is found in the theta-ratio histogram, even after retrying
+  with NREM excluded, it hard-codes `THthresh = 0` — and the line that would
+  recompute `REMtimes` for that fallback branch is commented out in
+  buzcode's own code. Since theta ratio is a positive quantity, `thratio > 0`
+  is satisfied by nearly every sample, so REM silently degenerates to "not
+  moving and low SW power," with **no theta signal involved at all** — not a
+  subtly-worse estimate, no real REM detection happening. This is a stealthier
+  version of the MS09/MS11 problem above: it doesn't print loudly (same "No
+  bimodal dip found" message as the known cases, easy to miss), and the
+  resulting WAKE/NREM/REM proportions can look entirely plausible by chance,
+  so **checking `THthresh` directly is the only way to know** —
+  `sleep_sanity_check.py`'s `check_theta_threshold()` now does this
+  automatically, first thing, every run.
+  **Confirmed on 7 of the first 13 rats scored this way**: MS14, MS15, MS18,
+  MS20, MS21, MS23 (since fixed), MS24_CTAtoExt. Only MS08, MS09, MS11, MS22,
+  MS23 (after fixing), MS24_hab3toExt, MS25 have a real buzcode-found split.
+  **Standard fix adopted**: force the rat's own theta-ratio `mean + 1*SD` as
+  `THthresh` (`manual_theta_threshold.m`, reuses cached metrics, seconds not
+  hours), then run `video_correct_rem.py` to veto any surviving REM timepoint
+  whose independent video-movement signal is too high. This is a real,
+  validated fix for some rats (MS23: REM 6.3%, passes every check) but for
+  others (MS14, MS21, MS25) it still leaves REM quantitatively low/fragmented
+  — Peleg's explicit choice is to keep the corrected result anyway for
+  consistency, over alternatives that score better on paper. **MS15/MS18/
+  MS20** (the Control/Familiar group) additionally show a much more severe
+  version — WAKE itself collapses to ~8-17% (not just REM being wrong) —
+  confirmed independent of which theta channel is tried; root cause there
+  traced to the automatic *motion*-threshold picker (same style of bug,
+  different metric) degenerating the same way. These three are paused,
+  untouched by the mean+1SD/video-correction fix as of this writing.
 
 ## How we work together
 

@@ -211,8 +211,10 @@ Open follow-ups:
       by all rats. All other rats checked: no black hours.
 - [ ] **MS15 has no video** (confirmed by Mai) → movement-based checks use
       EMG-from-LFP only for MS15.
-- [ ] **Next step: buzcode sleep scoring on every rat** — Peleg's plan: once all raw
-      data is in place, run it on all rats. **Unblocked 2026-09-29: all 12 rats' LF is on NPdata3.**
+- [x] ~~Next step: buzcode sleep scoring on every rat~~ — **done 2026-09-29 → 2026-10-04,
+      see the dedicated "Done in the buzcode-scoring effort" block below** for the full
+      per-rat results and the open items it left (MS24_CTAtoExt still being finalized;
+      MS15/MS18/MS20 untouched, severe WAKE-collapse, paused by Peleg's own call).
 
 Done in this data-collection effort (2026-09-24 → 2026-09-29):
 
@@ -238,6 +240,80 @@ Done in this data-collection effort (2026-09-24 → 2026-09-29):
       MS21/MS22/MS23 camera `.csv` copied.
 - [x] MS16/MS19 excluded and their `Z:\Peleg` folders deleted; the shared
       registration atlas moved to `Z:\Peleg\Atlas\` and the MS21 viewer fixed.
+
+Done in the buzcode-scoring effort (2026-09-29 → 2026-10-04) — ran
+`find_theta_channel.m` / `run_sleep_score.m` / `sleep_sanity_check.py` /
+`MS_buzcode_analysis.py` (all already-shared, `ANIMALS`-config'd scripts,
+extended with an entry per rat, not copied) on every rat with raw data ready:
+
+- [x] **MS14, MS18, MS20, MS21, MS22, MS23, MS24 (both segments), MS25**
+      scored. Of these, **MS08, MS09, MS11, MS22, MS23, MS24_hab3toExt
+      ended up with a genuine, buzcode-validated theta split** (nonzero
+      `THthresh`, a real bimodal dip found) — MS22 and MS24_hab3toExt only
+      after their first-choice theta channel (found by `find_theta_channel.m`)
+      failed and the SW-channel fallback (65) worked instead.
+- [x] **Root-caused a real buzcode bug, not just "our channel picks are
+      bad"**: `ClusterStates_GetMetrics.m` hard-codes `THthresh=0` whenever
+      no bimodal split is found (even after retrying with NREM excluded),
+      and the line that would recompute `REMtimes` for that fallback branch
+      is commented out in buzcode's own source — so REM silently becomes
+      "not moving and low SW power," no theta signal involved at all.
+      Affected **7 of 13 rats checked**: MS14, MS15, MS18, MS20, MS21,
+      MS23 (before its fix), MS24_CTAtoExt. Added an explicit
+      `check_theta_threshold()` to `sleep_sanity_check.py` (now the first
+      thing it reports) so this never goes unnoticed again.
+- [x] Built **`manual_theta_threshold.m`** (forces a chosen `THthresh` by
+      reusing already-computed metrics — seconds, not a 2h+ rescore) and
+      **`video_correct_rem.py`** (vetoes any REM timepoint whose independent
+      video-movement signal is too high, reclassifying it to WAKE). Standard
+      combined method now: theta threshold = that rat's own thratio
+      `mean + 1*SD`, then the video correction on top.
+- [x] Applied the combined method to **MS14, MS21, MS23, MS25** (MS25 despite
+      already having a real automatic threshold — Peleg wanted consistency).
+      Result is a real, usable fix for MS23 (REM 6.3%, in range, passes
+      every check); for MS14/MS21/MS25 it leaves REM quantitatively flagged
+      low/fragmented, which Peleg explicitly accepted anyway over the
+      alternatives. **MS09/MS11's pre-existing sparse-REM caveat (probe
+      placement) stands unchanged** — not re-touched this round.
+- [x] All finalized rats' hypnogram+spectrogram+distribution plots
+      (`MS_buzcode_analysis.py` output) synced to each rat's own
+      `Z:\Peleg\<rat>\<rat>_buzcode_analysis\` (or `<segment>_buzcode_
+      analysis\` for MS24's two segments) — same folder as the sanity-check
+      summary PNG, matching the original MS08/09/11 convention.
+- [x] **Found 2026-10-04**: `MS24_CTAtoExt` (not `MS24_hab3toExt`) is the
+      segment that actually contains the real Training day / LiCl injection
+      — its own block 1 (00:17:51 into the segment) is the baseline-IOC
+      double-Sucrose block, LiCl at segment-time 1971.24s = wall-clock
+      2026-07-01 10:30:02. `MS24_hab3toExt` ends ~04:00 the same morning,
+      entirely before the Training day even starts. The Training-day window
+      Peleg needs (1.7 09:00 → 2.7 ~01:07) is covered by `MS24_CTAtoExt`
+      except the first 57 min (1.7 09:00–09:57, a real gap, in neither
+      segment).
+
+Still open from this effort:
+
+- [ ] **MS24_CTAtoExt not yet finalized** — its search-found channel 254
+      (mean+1SD+video-corr) gave REM=0.4% *and* a new taste-alignment flag
+      (88.2%, worse than every other rat) — something more than just REM
+      looked off. Currently re-running with channel 65 instead (the same
+      channel that gave a real threshold for MS24_hab3toExt). Once done:
+      sanity-check, decide if ch65 is better, apply mean+1SD+video-corr on
+      top if still needed, regenerate hypnograms. **This is the segment
+      Peleg actually needs**, so worth getting right rather than just
+      accepting the first attempt.
+- [ ] **MS15, MS18, MS20 untouched** — all three Control/Familiar-group rats
+      show a severe WAKE-collapse failure (WAKE drops to ~8-17%, REM
+      inflates to ~35-43%), confirmed regardless of theta channel tried.
+      Paused by Peleg's own explicit call back when this was found — never
+      applied the mean+1SD/video-correction method to these yet. Next big
+      piece of unstarted work.
+- [ ] A recurring gvfs-SMB mount bug left stuck `??????????` ghost file/
+      folder entries several times while overwriting a `<rat>_buzcode_
+      analysis` folder in place (MS14, MS21, MS23, MS25) — not fixable from
+      this machine, needs Peleg to delete from a Windows client (sometimes
+      with a cache-clear delay after). Mitigation: write new output to a
+      differently-named temp folder first, verify it, then swap names —
+      don't `rm -rf` + `mkdir` + `cp` directly in place.
 
 ## Ready to start
 
