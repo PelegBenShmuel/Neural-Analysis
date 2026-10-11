@@ -5,6 +5,146 @@ brain to the Princeton RAtlas (PRA) common coordinate framework (Dennis et
 al. 2023, `Articles/Princeton RAtlas...pdf`), then look up which atlas region
 the dye track lands in, to confirm claimed electrode placement (e.g. GC).
 
+## UPDATE (2026-10-06): MS24 and MS25 registered
+
+Source CTLS data for both was on the NAS at `Z:\Peleg\CTLS-MS24-25\`
+(`24b.dir\...Pos34...MontageComplete...` / `25.dir\...Pos35...MontageComplete...`)
+— a different location than MS19/21/23's `Z:\Mai\CTLS\`, since Peleg copied
+these himself this time. Same imaging setup as before (561nm single
+channel, `mMicronPerPixel=6.4039412`, `optovar=3.25` → same
+`SRC_XY_UM=1.9704434461538463` constant reused).
+
+**New finding: this session's mounting needed a different axis
+*permutation*, not just different flip signs.** Every prior animal
+(MS19/21/23) used `transpose(1,2,0)` and only varied in which axes got
+flipped. For MS24 and MS25, that transpose produced an axis arrangement that
+didn't match the atlas's convention at all (checked by comparing which
+axis, when held fixed, produces a coronal-vs-sagittal-vs-horizontal-looking
+slice — see `qc_explore/baseline_vs_pra.png` in each animal's tnvme folder)
+— both needed `transpose(2,1,0)` instead. This makes sense once you know
+to look for it (a sample can physically be mounted rotated 90° differently
+session to session) but is a real escalation of the existing
+"don't assume orientation carries over" rule from flip-signs to the
+permutation itself — **check the permutation too for any future animal**,
+don't just assume `transpose(1,2,0)` and start testing flips.
+
+**SUPERSEDED (see UPDATE 2026-10-08 below) — kept for the historical record:**
+~~Per-animal orientation found (both via the established
+visual-AP-check-then-registration-based-disambiguation method):~~
+- ~~**MS24**: no AP flip ... **DV-flip won** (Dice 0.81 vs ML-flip's 0.79)~~
+  — wrong, this was candB, see below.
+- ~~**MS25**: cerebellum was at the *wrong* end ... AP flip *was* needed ...
+  no additional ML/DV flip~~ — wrong, this was AP-only, see below.
+
+Both per-animal single-flip calls above turned out to be incomplete: each
+looked plausible in isolation (reasonable Dice, not visually garbled) but
+was wrong on exactly one axis when checked carefully — this single-slice +
+coarse-Dice method is **not reliable enough** for this bilaterally-symmetric,
+near-180°-rotation-prone orientation problem. See the 2026-10-08 update.
+
+## UPDATE (2026-10-08): both MS24 and MS25 actually need AP+DV flip together
+
+Peleg kept reporting the registered brain looked wrong in napari after each
+"fix" — first "upside down", then "MS24 and MS25 facing different
+directions relative to each other", then specifically "DV axis doesn't
+match" even after supposedly orientation-correct candidates. Each time,
+Claude's own checks (Dice, NCC against atlas, static slice renders, even a
+multi-slice coronal scan) said the result looked fine, and each time Peleg
+was right and Claude was wrong — **see
+[[feedback_registration_qc_verification]]: Peleg's direct napari inspection
+is the actual verification step, not Claude's own metrics.**
+
+What actually happened, worked out by testing every one of the 8 possible
+`transpose(2,1,0)`-based orientation candidates (naming: A=ML-flip only,
+B=DV-flip only, C=AP-flip only, D=AP+DV together, E=all three together):
+
+- candA, candB, candC (the 3 single-axis flips): each completes registration
+  without crashing and isn't visually garbled, so each *looked* like a
+  plausible candidate in isolation — but each has exactly one axis visibly
+  wrong against the atlas when Peleg checked closely (candB: AP wrong;
+  candC: DV wrong, confirmed "only DV axis, not ML" by Peleg directly).
+- **candD (AP+DV together) is the actually-correct one for both animals.**
+  Running it from a cold start (rigid+affine+bspline all at once) crashes
+  immediately for MS24 ("Too many samples map outside moving image buffer:
+  0/10000" partway through the affine stage) but runs cleanly end-to-end for
+  MS25 — same orientation math, different numerical behavior per animal.
+- candE (all three axes flipped) was also tried for MS24 as a hedge in case
+  ML was secretly wrong too — crashes the same way as candD. Peleg confirmed
+  directly that ML is fine, only DV — so candD (not E) is the real target.
+- **Root cause of MS24's candD crash, isolated**: splitting candD's
+  registration into stages showed rigid (EulerTransform, 8 resolutions) and
+  affine (general 12-param matrix, 8 resolutions) **both complete with
+  sane, non-degenerate parameters** — it's specifically the **Order3 bspline
+  stage** that diverges to 0 valid samples right at its first resolution.
+  This is a bspline step-size/stability issue, not an orientation/chirality
+  problem — confirmed by resampling the moving image through *just* the
+  saved rigid+affine transform (bypassing the crashing bspline) via
+  `itk.transformix_filter`, which Peleg confirmed looks globally correctly
+  oriented even though it's coarse (no fine deformation yet).
+
+**Current state:**
+- **MS25**: candD ran all the way through Order1→Order3→Order4→Order5
+  successfully. Confirmed correct by Peleg. Final:
+  `Z:\Peleg\MS25\MS25_Registration\registration_output_order5_candD\result_Order5.tif`.
+  `view_ms25_registration.py` (repo + NAS `view_registration_windows.py`)
+  already updated to point here, no cosmetic flip needed.
+- **MS24**: candD's rigid+affine stages are confirmed correct, but there is
+  **no finished fine-registration result yet** — Order3 bspline keeps
+  crashing. Interim rigid+affine-only result (coarse, no local deformation):
+  `Z:\Peleg\MS24\MS24_Registration\candD_rigidaffine_only\result.tif`. Local
+  working files: `/mnt/tnvme/peleg_MS24_registration/` —
+  `MS24_25um_oriented_candD.tif` (the correct input orientation),
+  `registration_output_rigidcandD/TransformParameters.1.txt` (the valid
+  saved rigid+affine transform to chain Order3 from).
+  **Next step when resuming:** get a stable Order3 bspline run for candD —
+  try a gentler initial step length or a coarser starting bspline grid
+  (rather than retrying the exact Order3 params that already crashed twice),
+  chained from that saved affine transform, then Order4/Order5 as usual.
+- candA/candB/candC/candE and all their order4/order5 variants are kept on
+  disk as dead ends, not used.
+
+**Real bug found and fixed in the stage-1 (Order1+Order3) scripts
+(`run_stage1_candidate.py` / `run_stage1.py`):** running Order1 and Order3
+as two separate `itk.ElastixRegistrationMethod.Update()` calls into the
+*same* output directory silently corrupts the chain — the second stage's
+`TransformParameters.0.txt` overwrites the first's, and since elastix
+records the init transform's *path* (not its content) in
+`InitialTransformParameterFileName`, the saved file ends up pointing to
+itself. The already-computed result images were still valid (Dice scores
+computed from them hold up), but the saved transform can't be correctly
+chained into order4/order5 afterward. **Fixed by matching the original,
+proven pattern** (`elastix_mv_to_fx.py`'s approach): one `ParameterObject`
+with *both* parameter files added via `AddParameterFile`, one single
+`itk.elastix_registration_method(...)` call — elastix then manages the
+two stages' indexing (`.0.txt`, `.1.txt`) correctly internally. Reusable
+template: `PRA/src/stage1_combined_template.py`. **If writing a new
+multi-stage registration script, always use one call with a combined
+parameter object (or at minimum, separate output directories per stage)
+— never two separate `Update()` calls sharing one output folder.**
+
+Final Dice (order5, vs. atlas mask) for the superseded candB/AP-only
+results: MS24 = 0.815, MS25 = 0.807 — **these numbers are stale**, computed
+on the wrong-orientation candidates (see 2026-10-08 update above). Not yet
+recomputed for MS25's candD (the confirmed-correct one) or for MS24 once it
+has a finished bspline result.
+
+Copied to NAS: MS25's candD result at
+`Z:\Peleg\MS25\MS25_Registration\registration_output_order5_candD\result_Order5.tif`;
+MS24 only has the interim rigid+affine-only candD result at
+`Z:\Peleg\MS24\MS24_Registration\candD_rigidaffine_only\result.tif` (see
+2026-10-08 update above for why). Viewer scripts:
+`Registration/view_ms24_registration.py` / `view_ms25_registration.py`,
+same pattern as MS21's (standalone, hardcoded, shared atlas from
+`Z:\Peleg\Atlas\`), synced to each animal's own NAS folder as
+`view_registration_windows.py` — MS25's already points at the candD result;
+MS24's still points at the old candC path and needs updating once a
+finished candD result exists.
+
+**Not yet done:** MS23 still has no NAS viewer package at all (same
+`/mnt/tnvme/peleg_MS23_registration/` pipeline output as the others, never
+copied over) — lowest priority since nobody's asked for it recently, but
+same quick recipe as MS24/25 above whenever needed.
+
 ## Where things live
 
 **The registration pipeline itself is not in this git repo** — it runs on
