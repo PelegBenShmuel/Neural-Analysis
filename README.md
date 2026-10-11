@@ -181,10 +181,11 @@ MS15, MS18, MS20–MS25.
   - `MS_buzcode_analysis.py` — loads buzcode sleep-state output + LFP + video
     movement + taste-event timestamps and visualizes them together, hourly.
     Takes an `ANIMAL` argument and reads all paths/channels/LiCl time from an
-    `ANIMALS` config dict (now covers MS08/09/11/14/21/22/23/24(x2)/25, plus
-    each rat's `_manualTH`/`_videocorr` variant where the theta threshold
-    needed correcting — see "Known limitations" below) — one script, not a
-    copy per animal (see "How we work together").
+    `ANIMALS` config dict (now covers all 13 rat-sessions MS08-MS25, plus
+    each rat's `_manualTH`/`_videocorr` variant where correction was needed —
+    see "Known limitations" below) — one script, not a copy per animal (see
+    "How we work together"). `mov_file` may be `None` (MS15 only, no video
+    at all) — the movement panel is skipped and shown as a placeholder.
   - `sleep_sanity_check.py` — coverage/**theta-threshold-validity**/
     state-proportion/bout-duration/taste-alignment/REM-plausibility/
     fragmentation checks for one animal's buzcode output, run before trusting
@@ -441,15 +442,41 @@ the behavioral basis for "REM sleep is needed to modify the engram, not read it.
   hours), then run `video_correct_rem.py` to veto any surviving REM timepoint
   whose independent video-movement signal is too high. This is a real,
   validated fix for some rats (MS23: REM 6.3%, passes every check) but for
-  others (MS14, MS21, MS25) it still leaves REM quantitatively low/fragmented
-  — Peleg's explicit choice is to keep the corrected result anyway for
-  consistency, over alternatives that score better on paper. **MS15/MS18/
-  MS20** (the Control/Familiar group) additionally show a much more severe
-  version — WAKE itself collapses to ~8-17% (not just REM being wrong) —
-  confirmed independent of which theta channel is tried; root cause there
-  traced to the automatic *motion*-threshold picker (same style of bug,
-  different metric) degenerating the same way. These three are paused,
-  untouched by the mean+1SD/video-correction fix as of this writing.
+  others (MS14, MS21, MS25, MS24_CTAtoExt) it still leaves REM quantitatively
+  low/fragmented — Peleg's explicit choice is to keep the corrected result
+  anyway for consistency, over alternatives that score better on paper ("REM
+  doesn't have to be high"). **MS24_CTAtoExt** additionally needed a theta-
+  channel switch first (254 → 65, same channel that works for
+  MS24_hab3toExt) before the mean+1SD+video-corr fix, finalized 2026-10-06 at
+  REM 2.8%; its persistent taste-in-WAKE flag (87.7%) was separately
+  investigated and ruled out as a clock/timing bug (`ct_offsets.txt` all-zero,
+  clean `TPrime.log`, and the "wrong-state" taste events are never deep in
+  sleep — consistent instead with Mai's `track.txt`-documented IOC-manifold
+  liquid-leakage problem specific to this rat).
+  **MS15/MS18/MS20** (the Control/Familiar group) had additionally shown a
+  much more severe version — WAKE itself collapsed to ~8-17% (not just REM
+  being wrong) — initially suspected to be a *separate* bug in buzcode's
+  automatic motion-threshold picker. Fixed 2026-10-06: turned out to be
+  **the same single root cause**, not a second bug. With `THthresh=0`,
+  `hightheta` (`thratio > 0`) is true for virtually every sample, which makes
+  buzcode's `WAKEtimes = ~NREMtimes & ~REMtimes` collapse to depending
+  entirely on the motion-threshold split — and these three rats' automatic
+  motion threshold happened to be very strict (only 7-14% of samples counted
+  as "moving"), so almost nothing qualified as WAKE and everything else fell
+  into REM by elimination. Applying the standard mean+1SD theta-threshold fix
+  alone (no motion-threshold override needed) immediately restored normal
+  WAKE/NREM proportions for all three (MS15: WAKE 47.0%/REM 2.3%; MS18: WAKE
+  45.9%/REM 7.9%, no video-correction even needed, one of the cleanest
+  results in the cohort; MS20: WAKE 46.1%/REM 6.6%). MS20's residual
+  taste-alignment flag was checked the same way as MS24_CTAtoExt's
+  (depth-into-sleep of the "wrong-state" events) and is real short arousals
+  around feeding, not a clock bug.
+  As of 2026-10-06, `video_correct_rem.py` has been run on **every rat that
+  has video** (not just the ones that needed the theta fix — MS08, MS09,
+  MS11, MS22, MS24_hab3toExt got it too, for consistency), and all 13
+  rat-sessions' hypnogram/spectrogram plots are regenerated from final states
+  and synced to `Z:\Peleg`. MS15 remains the only rat with no video at all
+  (confirmed by Mai) — its REM plausibility check is EMG-from-LFP only.
 
 ## How we work together
 

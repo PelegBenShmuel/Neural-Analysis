@@ -76,14 +76,13 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'SleepAnalysis'))
-from MS_buzcode_analysis import ANIMALS, TASTE_COLORS, copy_to_share_safely
+from MS_buzcode_analysis import ANIMALS, TASTE_COLORS, copy_to_share_safely, derive_training_blocks
 
 # ── Analysis parameters ───────────────────────────────────────────────────────
 WINDOW = (-1.0, 2.5)       # seconds relative to taste delivery
 PSTH_BIN = 0.1             # PSTH plotting bin width (s)
 ANOVA_BIN = 0.25           # repeated-measures ANOVA bin width (s), Piette et al.-style
 ZETA_DUR = 2.5             # post-event window ZETA/ANOVA evaluate (s)
-GAP_THRESH = 1000.0        # seconds; a gap bigger than this starts a new taste-delivery block
 ALPHA = 0.05               # significance threshold for all three tests
 ZETA_RESAMPLES = 1000
 
@@ -117,49 +116,6 @@ def load_animal_data(cfg):
     all_events = np.sort(np.concatenate(list(events_by_taste.values())))
 
     return spike_times_samples, spike_clusters, sample_rate, good_clusters, events_by_taste, all_events
-
-
-def derive_training_blocks(all_events, sorted_min, sorted_max, licl_time_s):
-    """Group taste events into delivery blocks by gap-detection on the raw
-    timestamps themselves (not any pre-computed block-boundary file), then
-    anchor on the LiCl injection time to pick out the Training day's Block
-    1-7 specifically -- NOT just "however many blocks happen to fall inside
-    the sorted window". That distinction matters: MS08's standard sorted
-    window (kilosort4_23_49h_mai, hours 23-49) happens to stop just short of
-    Day 5's "Block 8" (per Experiment Protocol and Procedure.md), so for
-    MS08 counting blocks-in-window gives 7 either way -- but MS09's sorted
-    window includes Block 8 too, so a naive count finds 8 and silently
-    includes a Day-5 block in what's supposed to be a Training-day-only
-    analysis. Block 1 = the block ending most recently before licl_time_s;
-    Blocks 2-7 are the 6 blocks immediately following it."""
-    gaps = np.diff(all_events)
-    starts_idx = np.concatenate([[0], np.where(gaps > GAP_THRESH)[0] + 1])
-    ends_idx = np.concatenate([np.where(gaps > GAP_THRESH)[0] + 1, [len(all_events)]])
-    all_blocks = [(all_events[s], all_events[e - 1]) for s, e in zip(starts_idx, ends_idx)]
-
-    pre_licl = [i for i, (t0, t1) in enumerate(all_blocks) if t1 < licl_time_s]
-    assert pre_licl, "no taste-delivery block found ending before the configured LiCl injection time"
-    block1_idx = pre_licl[-1]
-
-    training_blocks = all_blocks[block1_idx:block1_idx + 7]
-    assert len(training_blocks) == 7, (
-        f"only found {len(training_blocks)} blocks from Block 1 onward, expected 7 "
-        f"-- check this animal's spike_sorted_dir covers the full Training day"
-    )
-    t0_first, t1_last = training_blocks[0][0], training_blocks[-1][1]
-    assert t0_first >= sorted_min and t1_last <= sorted_max, (
-        f"Training day blocks span {t0_first:.1f}-{t1_last:.1f}s but sorted spikes only cover "
-        f"{sorted_min:.1f}-{sorted_max:.1f}s"
-    )
-
-    next_idx = block1_idx + 7
-    if next_idx < len(all_blocks):
-        extra_t0, extra_t1 = all_blocks[next_idx]
-        if extra_t0 >= sorted_min and extra_t1 <= sorted_max:
-            print(f"  (note: an 8th block at {extra_t0:.1f}-{extra_t1:.1f}s is also inside the sorted "
-                  f"window -- almost certainly Day 5's 'Block 8'; deliberately excluded, Training day only)")
-
-    return training_blocks
 
 
 # ── The two responsiveness tests ──────────────────────────────────────────────
@@ -360,7 +316,7 @@ def main():
      events_by_taste, all_events) = load_animal_data(cfg)
     sorted_min = spike_times_samples.min() / sample_rate
     sorted_max = spike_times_samples.max() / sample_rate
-    training_blocks = derive_training_blocks(all_events, sorted_min, sorted_max, cfg['licl_time_s'])
+    training_blocks = derive_training_blocks(all_events, cfg['licl_time_s'], sorted_min, sorted_max)
 
     print(f"{animal}: {len(good_clusters)} good clusters, "
           f"Training day blocks: {[(round(t0), round(t1)) for t0, t1 in training_blocks]}")

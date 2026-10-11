@@ -16,10 +16,16 @@ Z:\\Peleg and reports:
      different question from % of each hour spent asleep, which is already
      covered by training_day_sleep_state_extraction.py's phase-composition
      plot.
+  3. Hourly hypnograms -- 24 SEPARATE per-hour hypnogram PNGs (one round
+     hour per file, 09:00 on the LiCl day through 09:00 the next day),
+     styled like MS_buzcode_analysis.py's own per-hour hypnogram panel
+     (same WAKE/NREM/REM color scheme, 10-min HH:MM x-ticks, taste-event and
+     LiCl markers) -- matches that script's one-file-per-hour convention.
 
 Reuses per-animal config (session name, buzcode_analysis dir -> derives the
 Training_Day dir the same way training_day_sleep_state_extraction.py does)
-from MS_buzcode_analysis.py's ANIMALS dict -- see
+from MS_buzcode_analysis.py's ANIMALS dict, and load_taste_events /
+STATE_Y/STATE_COL/STATE_LBL from the other two scripts -- see
 feedback_no_script_duplication memory. Only animals that already have a
 Training-day cut (see that script) can be characterized here.
 
@@ -29,7 +35,8 @@ Writes locally to /tmp/<animal>_sleep_char first:
   - <animal>_sleep_bout_bins.csv
   - <animal>_hourly_sleep_pct.csv
   - <animal>_sleep_char.png (bout-bin bar chart + hourly-% bar chart)
-Then copies all three into the SAME Z:\\Peleg\\<animal>\\<animal>_Training_Day\\
+  - <animal>_hourly_hypnogram_01.png .. _24.png (one hypnogram per round hour)
+Then copies all of these into the SAME Z:\\Peleg\\<animal>\\<animal>_Training_Day\\
 folder the input file came from, verified by size (per Peleg's explicit ask
 to keep this analysis's output next to its source).
 """
@@ -43,9 +50,13 @@ import scipy.io as sio
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import matplotlib.lines as mpl_lines
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from MS_buzcode_analysis import ANIMALS, copy_to_share_safely
+from MS_buzcode_analysis import (ANIMALS, copy_to_share_safely, plain_label,
+                                  STATE_Y, STATE_COL, STATE_LBL)
+from training_day_sleep_state_extraction import load_taste_events
 
 STATE_CODE = {'WAKE': 1, 'NREM': 3, 'REM': 5}
 SLEEP_CODES = (STATE_CODE['NREM'], STATE_CODE['REM'])
@@ -117,11 +128,98 @@ def hourly_sleep_pct(t, dt, is_sleep, window_start_s):
     return per_hour_s, pct
 
 
+def plot_hourly_hypnograms(animal, session, cfg, t, states, rec_start, window_start_s, out_dir):
+    """24 SEPARATE per-hour hypnogram PNGs for the Training day (09:00 on
+    the LiCl day through 09:00 the next day, one round hour per file) --
+    styled like MS_buzcode_analysis.py's own per-hour hypnogram panel (same
+    STATE_Y/STATE_COL/STATE_LBL scheme, 10-min x-ticks in HH:MM, taste-event
+    and LiCl markers), matching that script's one-file-per-hour convention
+    rather than a single combined grid (Peleg's explicit request, 2026-10-08,
+    superseding the combined-grid version tried first)."""
+    taste_events = load_taste_events(cfg)
+    licl_time_s = cfg.get('licl_time_s')
+    out_paths = []
+
+    for hour in range(24):
+        t0 = window_start_s + hour * 3600
+        t1 = t0 + 3600
+        mask = (t >= t0) & (t < t1)
+        t_seg, st_seg = t[mask], states[mask]
+        if len(t_seg) == 0:
+            continue
+
+        hour_start = rec_start + timedelta(seconds=t0)
+        hour_end = rec_start + timedelta(seconds=t1)
+        tick_pos = [t0 + m * 600 for m in range(7)]
+        tick_lbl = [(rec_start + timedelta(seconds=p)).strftime('%H:%M') for p in tick_pos]
+        date_s = hour_start.strftime('%Y-%m-%d')
+        time_lbl = f"{hour_start.strftime('%H:%M')} - {hour_end.strftime('%H:%M')}"
+
+        fig, ax = plt.subplots(figsize=(14, 3.2))
+        fig.suptitle(f'{session} -- {date_s}  {time_lbl}  (hour {hour + 1}/24)',
+                     fontsize=12, fontweight='bold')
+
+        for i in range(len(t_seg) - 1):
+            s = int(st_seg[i])
+            if s in STATE_Y:
+                ax.fill_between([t_seg[i], t_seg[i + 1]], STATE_Y[s] - 0.45, STATE_Y[s] + 0.45,
+                                 color=STATE_COL[s], linewidth=0)
+
+        plotted = {}
+        for t_sec, name, color in taste_events:
+            if t0 <= t_sec <= t1:
+                ax.axvline(t_sec, color=color, linestyle=':', linewidth=1.5, alpha=0.85)
+                plotted[name] = color
+
+        licl_in_view = licl_time_s is not None and t0 <= licl_time_s <= t1
+        if licl_in_view:
+            ax.axvline(licl_time_s, color='black', linewidth=2.2, zorder=10)
+
+        ax.set_xlim(t0, t1)
+        ax.set_xticks(tick_pos)
+        ax.set_xticklabels(tick_lbl)
+        ax.set_yticks([0, 1, 2])
+        ax.set_yticklabels(['NREM', 'REM', 'WAKE'], fontsize=10)
+        ax.set_ylim(-0.6, 2.6)
+        ax.set_ylabel('State', fontsize=11)
+        ax.set_xlabel('Time', fontsize=11)
+        ax.grid(axis='x', linestyle='--', alpha=0.25)
+
+        state_patches = [mpatches.Patch(color=STATE_COL[k], label=STATE_LBL[k]) for k in [1, 3, 5]]
+        state_legend = ax.legend(handles=state_patches, loc='upper right', ncol=3,
+                                  fontsize=9, framealpha=0.7)
+        ax.add_artist(state_legend)
+        if plotted or licl_in_view:
+            legend_handles = [mpatches.Patch(color=c, label=n) for n, c in plotted.items()]
+            if licl_in_view:
+                legend_handles.append(mpl_lines.Line2D([0], [0], color='black', linewidth=2.2,
+                                                         label='LiCl injection'))
+            ax.legend(handles=legend_handles, loc='upper left', ncol=len(legend_handles),
+                      fontsize=8, framealpha=0.7, title='Taste / event')
+
+        plt.tight_layout()
+        out = os.path.join(out_dir, f'{animal}_hourly_hypnogram_{hour + 1:02d}.png')
+        fig.savefig(out, dpi=150, bbox_inches='tight', facecolor='white')
+        plt.close(fig)
+        out_paths.append(out)
+
+    print(f'{len(out_paths)} hourly hypnogram PNGs saved -> {out_dir}')
+    return out_paths
+
+
 def main():
-    animal = sys.argv[1] if len(sys.argv) > 1 else 'MS08'
-    cfg = ANIMALS[animal]
+    animal_key = sys.argv[1] if len(sys.argv) > 1 else 'MS08'
+    cfg = ANIMALS[animal_key]
+    # plain_label() on both the key and the session name: some rats (e.g.
+    # MS18, MS20) only have a _videocorr-suffixed ANIMALS key at all, so the
+    # key itself needs collapsing for folder naming, same as the session
+    # name needs collapsing to match the filename
+    # training_day_sleep_state_extraction.py actually wrote (see its
+    # save_training_day_mat for the matching logic).
+    animal = plain_label(animal_key)
     nas_dir = os.path.join(os.path.dirname(cfg['out_dir']), f'{animal}_Training_Day')
-    mat_path = os.path.join(nas_dir, f'{cfg["session"]}_TrainingDay.SleepState.states.mat')
+    session_label = plain_label(cfg['session'])
+    mat_path = os.path.join(nas_dir, f'{session_label}_TrainingDay.SleepState.states.mat')
     if not os.path.exists(mat_path):
         print(f'{mat_path} not found -- run training_day_sleep_state_extraction.py '
               f'for {animal} first.')
@@ -201,7 +299,10 @@ def main():
     plt.close(fig)
     print(f'Plot saved -> {png_path}')
 
-    for local_path in (bins_csv, hourly_csv, png_path):
+    hourly_hyp_paths = plot_hourly_hypnograms(animal, session, cfg, t, states,
+                                               rec_start, window_start_s, out_dir)
+
+    for local_path in (bins_csv, hourly_csv, png_path, *hourly_hyp_paths):
         copy_to_share_safely(local_path, nas_dir)
     print(f'\nCopied to the share -> {nas_dir}')
 

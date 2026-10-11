@@ -19,6 +19,7 @@ before (see plot_full_hypnogram.py's notes).
 """
 import sys
 import os
+import re
 import shutil
 import time
 from datetime import datetime, timedelta
@@ -221,6 +222,23 @@ ANIMALS = {
         # (20 Suc:10:10:10) at rec 88248s [24:30:48]. LiCl = blk8 start + 15min.
         licl_time_s = 88248 + 15 * 60,
     ),
+    'MS22_videocorr': dict(
+        session   = 'MS22_hab3toExt_videocorr',
+        mat_file  = '/media/anan/diskh2/MS22/MS22_hab3toExt/MS22_hab3toExt_videocorr.SleepState.states.mat',
+        lfp_mat   = '/media/anan/diskh2/MS22/MS22_hab3toExt/MS22_hab3toExt.SleepScoreLFP.LFP.mat',
+        mov_file  = f'{NAS_PELEG}/MS22/MS_22_Raw_Data/MS22_VideoMovement.npy',
+        sync_file = f'{NAS_PELEG}/MS22/MS_22_Raw_Data/MS22_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS22/MS_22_Raw_Data/MS22_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS22/MS_22_Raw_Data/MS22_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS22/MS_22_Raw_Data/MS22_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS22/MS_22_Raw_Data/MS22_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir   = f'{NAS_PELEG}/MS22/MS22_buzcode_analysis',
+        lfp_ch    = 65,
+        rec_start = datetime(2026, 4, 21, 9, 29, 15),
+        licl_time_s = 88248 + 15 * 60,
+    ),
     'MS23': dict(
         session   = 'MS23_hab3toExt',
         mat_file  = '/media/anan/diskh2/MS23/MS23_hab3toExt/MS23_hab3toExt.SleepState.states.mat',
@@ -261,6 +279,23 @@ ANIMALS = {
         # moment, which shows up instead at the start of MS24_CTAtoExt below.
         licl_time_s = None,
     ),
+    'MS24_hab3toExt_videocorr': dict(
+        session   = 'MS24_hab3toExt_videocorr',
+        mat_file  = '/media/anan/diskh2/MS24/MS24_hab3toExt/MS24_hab3toExt_videocorr.SleepState.states.mat',
+        lfp_mat   = '/media/anan/diskh2/MS24/MS24_hab3toExt/MS24_hab3toExt.SleepScoreLFP.LFP.mat',
+        mov_file  = f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_hab3toExt_VideoMovement.npy',
+        sync_file = f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir   = f'{NAS_PELEG}/MS24/MS24_hab3toExt_buzcode_analysis',
+        lfp_ch    = 65,
+        rec_start = datetime(2026, 6, 30, 9, 28, 0),
+        licl_time_s = None,
+    ),
     'MS24_CTAtoExt': dict(
         session   = 'MS24_CTAtoExt',
         mat_file  = '/media/anan/diskh2/MS24/MS24_CTAtoExt/MS24_CTAtoExt.SleepState.states.mat',
@@ -274,13 +309,30 @@ ANIMALS = {
             'Acid'   : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
         },
         out_dir   = f'{NAS_PELEG}/MS24/MS24_CTAtoExt_buzcode_analysis',
-        lfp_ch    = 254,
+        lfp_ch    = 65,  # ch254 rejected 2026-10-04, see run_sleep_score.m
         rec_start = datetime(2026, 7, 1, 9, 57, 11),  # from .lf.meta fileCreateTime
         # Block-detected 2026-10-02: blk1 (00:17:51-00:27:47, 20 Suc:10:10:10)
         # is itself the baseline-IOC/CTA-induction block -- this segment's
         # recording restart happened to begin right around the injection
         # moment (corrects the earlier assumption that this segment has no
         # Training day at all). LiCl = blk1 start + 15min.
+        licl_time_s = 1071.24 + 15 * 60,
+    ),
+    'MS24_CTAtoExt_videocorr': dict(
+        session   = 'MS24_CTAtoExt_manualTH_videocorr',
+        mat_file  = '/media/anan/diskh2/MS24/MS24_CTAtoExt_manualTH/MS24_CTAtoExt_manualTH_videocorr.SleepState.states.mat',
+        lfp_mat   = '/media/anan/diskh2/MS24/MS24_CTAtoExt/MS24_CTAtoExt.SleepScoreLFP.LFP.mat',
+        mov_file  = f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_VideoMovement.npy',
+        sync_file = f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS24/MS_24_Raw_Data/MS24_CTAtoExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir   = f'{NAS_PELEG}/MS24/MS24_CTAtoExt_buzcode_analysis',
+        lfp_ch    = 65,
+        rec_start = datetime(2026, 7, 1, 9, 57, 11),
         licl_time_s = 1071.24 + 15 * 60,
     ),
     'MS25': dict(
@@ -306,7 +358,7 @@ ANIMALS = {
         session   = 'MS11_hab3',
         mat_file  = '/media/anan/diskh2/MS11/MS11_hab3/MS11_hab3.SleepState.states.mat',
         lfp_mat   = '/media/anan/diskh2/MS11/MS11_hab3/MS11_hab3.SleepScoreLFP.LFP.mat',
-        mov_file  = f'{NAS_PELEG}/MS11/MS11_old_pipeline/data/11_VideoMovement.npy',
+        mov_file  = f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_VideoMovement.npy',
         # No _corr variant of the sync file exists for MS11 (unlike the taste
         # files below) -- this is the only one Mai's share has.
         sync_file = f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_7_0.txt',
@@ -331,6 +383,24 @@ ANIMALS = {
         licl_time_s = 89292.224696 + 5 * 60,
         # Mirrored from Z:\Mai\MS11\MS11_hab3_g0\kilosort4_23_49h_mai\
         # 2026-09-22, same minimal file set as MS08/MS09.
+        spike_sorted_dir = f'{NAS_PELEG}/MS11/MS11_Spike_Sorted_Data',
+    ),
+    'MS11_videocorr': dict(
+        session   = 'MS11_hab3_videocorr',
+        mat_file  = '/media/anan/diskh2/MS11/MS11_hab3/MS11_hab3_videocorr.SleepState.states.mat',
+        lfp_mat   = '/media/anan/diskh2/MS11/MS11_hab3/MS11_hab3.SleepScoreLFP.LFP.mat',
+        mov_file  = f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_VideoMovement.npy',
+        sync_file = f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_7_0.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS11/MS_11_Raw_Data/MS11_hab3_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir   = f'{NAS_PELEG}/MS11/MS11_buzcode_analysis',
+        lfp_ch    = 65,
+        rec_start = datetime(2025, 5, 27, 9, 41, 49),
+        licl_time_s = 89292.224696 + 5 * 60,
         spike_sorted_dir = f'{NAS_PELEG}/MS11/MS11_Spike_Sorted_Data',
     ),
     'MS08': dict(
@@ -365,6 +435,24 @@ ANIMALS = {
         # see TODO.md "Mirrored MS08's minimal raw spike-sorted data" (2026-09-17).
         spike_sorted_dir = f'{NAS_PELEG}/MS08/MS08_Spike_Sorted_Data',
     ),
+    'MS08_videocorr': dict(
+        session   = 'MS08_hab3toExp_videocorr',
+        mat_file  = '/media/anan/diskh2/MS08/MS08_hab3toExp/MS08_hab3toExp_videocorr.SleepState.states.mat',
+        lfp_mat   = '/media/anan/diskh2/MS08/MS08_hab3toExp/MS08_hab3toExp.SleepScoreLFP.LFP.mat',
+        mov_file  = f'{NAS_PELEG}/MS08/MS_08_Raw_Data/MS08_VideoMovement.npy',
+        sync_file = f'{NAS_MAI}/MS08/MS08_hab3toExp_g1/MS08_hab3toExp_g1_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_MAI}/MS08/MS08_hab3toExp_g1/MS08_hab3toExp_g1_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_MAI}/MS08/MS08_hab3toExp_g1/MS08_hab3toExp_g1_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_MAI}/MS08/MS08_hab3toExp_g1/MS08_hab3toExp_g1_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_MAI}/MS08/MS08_hab3toExp_g1/MS08_hab3toExp_g1_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir   = f'{NAS_PELEG}/MS08/MS08_buzcode_analysis',
+        lfp_ch    = 370,
+        rec_start = datetime(2025, 3, 4, 9, 0, 9),
+        licl_time_s = 90588.5 + 5 * 60,
+        spike_sorted_dir = f'{NAS_PELEG}/MS08/MS08_Spike_Sorted_Data',
+    ),
     'MS09': dict(
         session   = 'MS09_hab3_ext',
         mat_file  = '/media/anan/diskh2/MS09/MS09_hab3_ext/MS09_hab3_ext.SleepState.states.mat',
@@ -392,6 +480,81 @@ ANIMALS = {
         # same minimal spike-sorted data set for MS09" (2026-09-17).
         spike_sorted_dir = f'{NAS_PELEG}/MS09/MS09_Spike_Sorted_Data',
     ),
+    'MS09_videocorr': dict(
+        session   = 'MS09_hab3_ext_videocorr',
+        mat_file  = '/media/anan/diskh2/MS09/MS09_hab3_ext/MS09_hab3_ext_videocorr.SleepState.states.mat',
+        lfp_mat   = '/media/anan/diskh2/MS09/MS09_hab3_ext/MS09_hab3_ext.SleepScoreLFP.LFP.mat',
+        mov_file  = f'{NAS_PELEG}/MS09/MS_09_Raw_Data/MS09_VideoMovement.npy',
+        sync_file = f'{NAS_PELEG}/MS09/MS_09_Raw_Data/MS09_hab3_ext_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS09/MS_09_Raw_Data/MS09_hab3_ext_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS09/MS_09_Raw_Data/MS09_hab3_ext_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS09/MS_09_Raw_Data/MS09_hab3_ext_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS09/MS_09_Raw_Data/MS09_hab3_ext_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir   = f'{NAS_PELEG}/MS09/MS09_buzcode_analysis',
+        lfp_ch    = 65,
+        rec_start = datetime(2025, 3, 18, 9, 20, 11),
+        licl_time_s = 89388.7 + 5 * 60,
+        spike_sorted_dir = f'{NAS_PELEG}/MS09/MS09_Spike_Sorted_Data',
+    ),
+    'MS15_manualTH': dict(
+        session   = 'MS15_manualTH',
+        mat_file  = '/media/anan/diskh2/MS15/MS15_hab3toExt_manualTH/MS15_manualTH.SleepState.states.mat',
+        lfp_mat   = '/media/anan/diskh2/MS15/MS15_hab3toExt/MS15_hab3toExt.SleepScoreLFP.LFP.mat',
+        mov_file  = None,  # MS15 has no video (confirmed by Mai)
+        sync_file = f'{NAS_PELEG}/MS15/MS_15_Raw_Data/MS15_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS15/MS_15_Raw_Data/MS15_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS15/MS_15_Raw_Data/MS15_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS15/MS_15_Raw_Data/MS15_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS15/MS_15_Raw_Data/MS15_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir   = f'{NAS_PELEG}/MS15/MS15_buzcode_analysis',
+        lfp_ch    = 65,
+        rec_start = datetime(2025, 8, 19, 9, 29, 49),  # from .lf.meta fileCreateTime
+        # Block-detected 2026-10-06: clean canonical pattern, blk8 =
+        # baseline-IOC (20 Suc:10:10:10) at rec 88215.9s. LiCl = blk8 start + 15min.
+        licl_time_s = 88215.9 + 15 * 60,
+    ),
+    'MS18_videocorr': dict(
+        session   = 'MS18_manualTH_videocorr',
+        mat_file  = '/media/anan/diskh2/MS18/MS18_hab3toExt_manualTH/MS18_manualTH_videocorr.SleepState.states.mat',
+        lfp_mat   = '/media/anan/diskh2/MS18/MS18_hab3toExt/MS18_hab3toExt.SleepScoreLFP.LFP.mat',
+        mov_file  = f'{NAS_PELEG}/MS18/MS_18_Raw_Data/MS18_VideoMovement.npy',
+        sync_file = f'{NAS_PELEG}/MS18/MS_18_Raw_Data/MS18_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS18/MS_18_Raw_Data/MS18_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS18/MS_18_Raw_Data/MS18_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS18/MS_18_Raw_Data/MS18_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS18/MS_18_Raw_Data/MS18_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir   = f'{NAS_PELEG}/MS18/MS18_buzcode_analysis',
+        lfp_ch    = 65,
+        rec_start = datetime(2025, 11, 26, 9, 32, 1),  # from .lf.meta fileCreateTime
+        # Block-detected 2026-10-06: clean canonical pattern, blk8 =
+        # baseline-IOC (20 Suc:10:10:10) at rec 89281.6s. LiCl = blk8 start + 15min.
+        licl_time_s = 89281.6 + 15 * 60,
+    ),
+    'MS20_videocorr': dict(
+        session   = 'MS20_manualTH_videocorr',
+        mat_file  = '/media/anan/diskh2/MS20/MS20_hab3toExt_manualTH/MS20_manualTH_videocorr.SleepState.states.mat',
+        lfp_mat   = '/media/anan/diskh2/MS20/MS20_hab3toExt/MS20_hab3toExt.SleepScoreLFP.LFP.mat',
+        mov_file  = f'{NAS_PELEG}/MS20/MS_20_Raw_Data/MS20_VideoMovement.npy',
+        sync_file = f'{NAS_PELEG}/MS20/MS_20_Raw_Data/MS20_hab3toExt_g0_tcat.nidq.xd_0_7_0_corr.txt',
+        taste_files = {
+            'Water'  : f'{NAS_PELEG}/MS20/MS_20_Raw_Data/MS20_hab3toExt_g0_tcat.nidq.xd_0_1_0_corr.txt',
+            'Sucrose': f'{NAS_PELEG}/MS20/MS_20_Raw_Data/MS20_hab3toExt_g0_tcat.nidq.xd_0_2_0_corr.txt',
+            'Salt'   : f'{NAS_PELEG}/MS20/MS_20_Raw_Data/MS20_hab3toExt_g0_tcat.nidq.xd_0_3_0_corr.txt',
+            'Acid'   : f'{NAS_PELEG}/MS20/MS_20_Raw_Data/MS20_hab3toExt_g0_tcat.nidq.xd_0_4_0_corr.txt',
+        },
+        out_dir   = f'{NAS_PELEG}/MS20/MS20_buzcode_analysis',
+        lfp_ch    = 229,
+        rec_start = datetime(2026, 1, 6, 9, 52, 23),  # from .lf.meta fileCreateTime
+        # Block-detected 2026-10-06: clean canonical pattern, blk8 =
+        # baseline-IOC (20 Suc:10:10:10) at rec 86861.3s. LiCl = blk8 start + 15min.
+        licl_time_s = 86861.3 + 15 * 60,
+    ),
 }
 
 TASTE_COLORS = {'Water': 'blue', 'Sucrose': 'orange', 'Salt': 'red', 'Acid': 'green'}
@@ -401,6 +564,76 @@ MOV_FPS = 25
 STATE_Y   = {1: 2,         3: 0,         5: 1}
 STATE_COL = {1: '#e06c3a', 3: '#4a90d9', 5: '#5cb85c'}
 STATE_LBL = {1: 'WAKE',   3: 'NREM',    5: 'REM'}
+
+GAP_THRESH = 1000.0  # seconds; a gap bigger than this starts a new taste-delivery block
+
+
+def derive_training_blocks(all_events, licl_time_s, sorted_min=-np.inf, sorted_max=np.inf):
+    """Group taste events into delivery blocks by gap-detection on the raw
+    timestamps themselves (not any pre-computed block-boundary file), then
+    anchor on the LiCl injection time to pick out the Training day's Block
+    1-7 specifically -- NOT just "however many blocks happen to fall inside
+    the sorted window". That distinction matters for spike-level callers:
+    MS08's standard sorted window (kilosort4_23_49h_mai, hours 23-49) happens
+    to stop just short of Day 5's "Block 8" (per Experiment Protocol and
+    Procedure.md), so for MS08 counting blocks-in-window gives 7 either way
+    -- but MS09's sorted window includes Block 8 too, so a naive count finds
+    8 and silently includes a Day-5 block in what's supposed to be a
+    Training-day-only analysis. Block 1 = the block ending most recently
+    before licl_time_s; Blocks 2-7 are the 6 blocks immediately following
+    it. sorted_min/sorted_max default to -inf/+inf (no-op) for callers that
+    have no spike-sorted window to check against (e.g. sleep-only analyses --
+    see feedback_no_script_duplication memory; moved here from
+    NeuralAnalysis/cluster_responsiveness.py, its original caller, so a
+    sleep-only script can reuse it without pulling in that script's
+    zetapy/statsmodels/openpyxl dependencies)."""
+    gaps = np.diff(all_events)
+    starts_idx = np.concatenate([[0], np.where(gaps > GAP_THRESH)[0] + 1])
+    ends_idx = np.concatenate([np.where(gaps > GAP_THRESH)[0] + 1, [len(all_events)]])
+    all_blocks = [(all_events[s], all_events[e - 1]) for s, e in zip(starts_idx, ends_idx)]
+
+    pre_licl = [i for i, (t0, t1) in enumerate(all_blocks) if t1 < licl_time_s]
+    assert pre_licl, "no taste-delivery block found ending before the configured LiCl injection time"
+    block1_idx = pre_licl[-1]
+
+    training_blocks = all_blocks[block1_idx:block1_idx + 7]
+    assert len(training_blocks) == 7, (
+        f"only found {len(training_blocks)} blocks from Block 1 onward, expected 7 "
+        f"-- check this animal's taste-event files cover the full Training day"
+    )
+    t0_first, t1_last = training_blocks[0][0], training_blocks[-1][1]
+    assert t0_first >= sorted_min and t1_last <= sorted_max, (
+        f"Training day blocks span {t0_first:.1f}-{t1_last:.1f}s but sorted spikes only cover "
+        f"{sorted_min:.1f}-{sorted_max:.1f}s"
+    )
+
+    next_idx = block1_idx + 7
+    if next_idx < len(all_blocks):
+        extra_t0, extra_t1 = all_blocks[next_idx]
+        if extra_t0 >= sorted_min and extra_t1 <= sorted_max:
+            print(f"  (note: an 8th block at {extra_t0:.1f}-{extra_t1:.1f}s was also detected -- "
+                  f"almost certainly Day 5's 'Block 8'; deliberately excluded, Training day only)")
+
+    return training_blocks
+
+
+def plain_label(animal_key):
+    """Strip known pipeline-variant suffixes (_videocorr, _manualTH) to get
+    the plain rat/segment label used for Z:\\Peleg folder and file naming.
+    An ANIMALS dict key may point at a specific scoring variant (e.g.
+    'MS14_videocorr' for that rat's final video-corrected result, or
+    'MS18_videocorr' where no plain 'MS18' key even exists) while the share
+    still keeps one folder/file set per rat/segment, not one per variant --
+    so downstream scripts (training_day_sleep_state_extraction.py,
+    sleep_char.py) can look up a variant key for the right data while still
+    writing/finding output under the plain name (e.g. MS14_Training_Day,
+    not MS14_videocorr_Training_Day)."""
+    label = animal_key
+    while True:
+        new = re.sub(r'(_manualTH|_videocorr)$', '', label)
+        if new == label:
+            return label
+        label = new
 
 
 def copy_to_share_safely(local_path, nas_dir):
@@ -480,12 +713,17 @@ def main():
     lfp_data = lfp_mat['SleepScoreLFP'].thLFP.astype(np.float32)
     print(f'  {lfp_data.shape[0]} samples  ({lfp_data.shape[0]/FS_OUT/3600:.2f} h at {FS_OUT} Hz)')
 
-    print('Loading video movement...')
-    mov_raw = np.load(cfg['mov_file']).astype(np.float32)
-    n_sec   = len(mov_raw) // MOV_FPS
-    mov_1hz = mov_raw[:n_sec * MOV_FPS].reshape(n_sec, MOV_FPS).mean(axis=1)
-    log_mov      = np.log1p(mov_1hz)
-    mov_wake_thr = float(np.expm1(log_mov.mean() + 1.5 * log_mov.std()))
+    if cfg.get('mov_file') is not None:
+        print('Loading video movement...')
+        mov_raw = np.load(cfg['mov_file']).astype(np.float32)
+        n_sec   = len(mov_raw) // MOV_FPS
+        mov_1hz = mov_raw[:n_sec * MOV_FPS].reshape(n_sec, MOV_FPS).mean(axis=1)
+        log_mov      = np.log1p(mov_1hz)
+        mov_wake_thr = float(np.expm1(log_mov.mean() + 1.5 * log_mov.std()))
+    else:
+        print('No video for this animal -- skipping movement panel.')
+        mov_1hz = None
+        mov_wake_thr = None
 
     with open(cfg['sync_file']) as f:
         video_sync_offset = float(f.readline().strip())
@@ -598,10 +836,11 @@ def main():
         vmax = np.percentile(spec_db, 99)
 
         lfp_secs = np.arange(t0, t1)
-        mov_idx  = (lfp_secs - video_sync_offset).astype(int)
-        valid    = (mov_idx >= 0) & (mov_idx < len(mov_1hz))
-        mov_seg  = np.where(valid, mov_1hz[np.clip(mov_idx, 0, len(mov_1hz)-1)], 0.0)
-        mov_tmin = lfp_secs / 60.0
+        if mov_1hz is not None:
+            mov_idx  = (lfp_secs - video_sync_offset).astype(int)
+            valid    = (mov_idx >= 0) & (mov_idx < len(mov_1hz))
+            mov_seg  = np.where(valid, mov_1hz[np.clip(mov_idx, 0, len(mov_1hz)-1)], 0.0)
+            mov_tmin = lfp_secs / 60.0
 
         fig, axes = plt.subplots(6, 1, figsize=(15, 16), sharex=True,
                                  gridspec_kw={'height_ratios': [3, 1.5, 1.5, 1, 1, 2]})
@@ -634,12 +873,18 @@ def main():
         axes[3].set_ylabel('EMG', fontsize=9)
         axes[3].legend(loc='upper right', fontsize=8, framealpha=0.7)
 
-        axes[4].fill_between(mov_tmin, mov_seg, alpha=0.6, color='steelblue')
-        axes[4].axhline(mov_wake_thr, color='darkorange', linestyle='--', linewidth=1.2,
-                        label=f'Wake thr={mov_wake_thr:.0f} px')
-        axes[4].set_ylabel('Movement\n(px/frame)', fontsize=9)
-        axes[4].set_title('Video Movement', fontsize=9, loc='left', pad=2)
-        axes[4].legend(loc='upper right', fontsize=8, framealpha=0.7)
+        if mov_1hz is not None:
+            axes[4].fill_between(mov_tmin, mov_seg, alpha=0.6, color='steelblue')
+            axes[4].axhline(mov_wake_thr, color='darkorange', linestyle='--', linewidth=1.2,
+                            label=f'Wake thr={mov_wake_thr:.0f} px')
+            axes[4].set_ylabel('Movement\n(px/frame)', fontsize=9)
+            axes[4].set_title('Video Movement', fontsize=9, loc='left', pad=2)
+            axes[4].legend(loc='upper right', fontsize=8, framealpha=0.7)
+        else:
+            axes[4].text(0.5, 0.5, 'No video available for this animal',
+                         ha='center', va='center', transform=axes[4].transAxes,
+                         fontsize=9, color='gray', style='italic')
+            axes[4].set_yticks([])
 
         ax = axes[5]
         for i in range(len(t_seg) - 1):

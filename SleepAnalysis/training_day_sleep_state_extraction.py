@@ -48,7 +48,8 @@ import matplotlib.patches as mpatches
 import matplotlib.lines as mpl_lines
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from MS_buzcode_analysis import ANIMALS, TASTE_COLORS, STATE_COL, STATE_LBL, copy_to_share_safely
+from MS_buzcode_analysis import (ANIMALS, TASTE_COLORS, STATE_COL, STATE_LBL,
+                                  copy_to_share_safely, plain_label)
 
 STATE_CODE = {'WAKE': 1, 'NREM': 3, 'REM': 5}
 
@@ -91,6 +92,36 @@ def load_states(mat_file):
         bouts  = {name: np.array(f[f'SleepState/ints/{name}state'])
                   for name in STATE_CODE}
     return t, states, bouts
+
+
+def fill_same_state_gaps(states):
+    """Fill undefined (state=0) stretches flanked by the SAME real state on
+    both sides -- empirically (checked on MS08's full recording) ~80% of
+    buzcode's undefined gaps are exactly this: WAKE-undef-WAKE or
+    NREM-undef-NREM, median 15s, almost certainly a brief metric wobble near
+    a classification threshold rather than a real state change. Gaps
+    flanked by two DIFFERENT states (a genuine transition) are deliberately
+    left as 0 -- guessing exactly which second within a real transition the
+    state changed would manufacture false precision we don't have grounds
+    for. Returns a new array (does not mutate the input) and the number of
+    samples filled, for a transparent printout/record."""
+    states = states.copy()
+    is_undef = states == 0
+    if not is_undef.any():
+        return states, 0
+    change = np.where(np.diff(is_undef.astype(int)) != 0)[0]
+    starts = np.concatenate(([0], change + 1))
+    stops = np.concatenate((change, [len(is_undef) - 1]))
+    n_filled = 0
+    for s, e in zip(starts, stops):
+        if not is_undef[s]:
+            continue
+        before = states[s - 1] if s > 0 else None
+        after = states[e + 1] if e + 1 < len(states) else None
+        if before is not None and after is not None and before == after:
+            states[s:e + 1] = before
+            n_filled += e + 1 - s
+    return states, n_filled
 
 
 def load_taste_events(cfg):
@@ -251,13 +282,23 @@ def cut_training_day_states(cfg, t, states, bouts, licl_time_s, window):
               'Training day: a 24h window from 9:00 AM on the day LiCl was '
               'injected through 9:00 AM the following day (see '
               'window_start_s/window_end_s for the exact recording-relative '
-              'bounds, and licl_time_s for the injection timestamp).'),
+              'bounds, and licl_time_s for the injection timestamp). '
+              'Undefined (0) gaps flanked by the same real state on both '
+              'sides have been filled with that state (see '
+              'fill_same_state_gaps in training_day_sleep_state_extraction.py); '
+              'gaps spanning a genuine state transition are left as 0.'),
         **cut_bouts,
     )
 
 
 def save_training_day_mat(animal, cfg, cut_data, out_dir):
-    mat_path = os.path.join(out_dir, f'{cfg["session"]}_TrainingDay.SleepState.states.mat')
+    # plain_label() on cfg['session'] (not just `animal`) keeps the richer
+    # existing naming style (e.g. MS14_hab3toExt, not just MS14) wherever the
+    # session name carries that detail, while still collapsing variant
+    # suffixes (_manualTH/_videocorr) so sleep_char.py can find this file
+    # again later regardless of which ANIMALS key it's invoked with.
+    session_label = plain_label(cfg['session'])
+    mat_path = os.path.join(out_dir, f'{session_label}_TrainingDay.SleepState.states.mat')
     sio.savemat(mat_path, cut_data)
     dur_h = (cut_data['t'][-1] - cut_data['t'][0]) / 3600
     day_start_dt = cfg['rec_start'] + timedelta(seconds=cut_data['window_start_s'])
@@ -269,8 +310,9 @@ def save_training_day_mat(animal, cfg, cut_data, out_dir):
 
 
 def main():
-    animal = sys.argv[1] if len(sys.argv) > 1 else 'MS08'
-    cfg = ANIMALS[animal]
+    animal_key = sys.argv[1] if len(sys.argv) > 1 else 'MS08'
+    cfg = ANIMALS[animal_key]
+    animal = plain_label(animal_key)
     licl_time_s = cfg.get('licl_time_s')
     if licl_time_s is None:
         print(f'{animal} ({cfg["session"]}) has no licl_time_s set -- no '
@@ -292,6 +334,10 @@ def main():
           f'({window_start_h:+.2f}h to {window_end_h:+.2f}h relative to LiCl)')
 
     t, states, bouts = load_states(cfg['mat_file'])
+    states, n_filled = fill_same_state_gaps(states)
+    if n_filled:
+        print(f'Filled {n_filled} undefined samples flanked by the same '
+              f'state on both sides (left genuine-transition gaps as-is)')
     taste_events = load_taste_events(cfg)
 
     rows = phase_breakdown(t, states, bouts, licl_time_s)

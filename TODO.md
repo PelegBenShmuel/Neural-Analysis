@@ -211,10 +211,10 @@ Open follow-ups:
       by all rats. All other rats checked: no black hours.
 - [ ] **MS15 has no video** (confirmed by Mai) → movement-based checks use
       EMG-from-LFP only for MS15.
-- [x] ~~Next step: buzcode sleep scoring on every rat~~ — **done 2026-09-29 → 2026-10-04,
-      see the dedicated "Done in the buzcode-scoring effort" block below** for the full
-      per-rat results and the open items it left (MS24_CTAtoExt still being finalized;
-      MS15/MS18/MS20 untouched, severe WAKE-collapse, paused by Peleg's own call).
+- [x] ~~Next step: buzcode sleep scoring on every rat~~ — **done 2026-09-29 → 2026-10-06,
+      see the dedicated "Done in the buzcode-scoring effort" block below.** All 13
+      rat-sessions (MS08, MS09, MS11, MS14, MS15, MS18, MS20, MS21, MS22, MS23,
+      MS24×2, MS25) now have finalized WAKE/NREM/REM states and synced hypnograms.
 
 Done in this data-collection effort (2026-09-24 → 2026-09-29):
 
@@ -268,13 +268,14 @@ extended with an entry per rat, not copied) on every rat with raw data ready:
       video-movement signal is too high, reclassifying it to WAKE). Standard
       combined method now: theta threshold = that rat's own thratio
       `mean + 1*SD`, then the video correction on top.
-- [x] Applied the combined method to **MS14, MS21, MS23, MS25** (MS25 despite
-      already having a real automatic threshold — Peleg wanted consistency).
-      Result is a real, usable fix for MS23 (REM 6.3%, in range, passes
-      every check); for MS14/MS21/MS25 it leaves REM quantitatively flagged
-      low/fragmented, which Peleg explicitly accepted anyway over the
-      alternatives. **MS09/MS11's pre-existing sparse-REM caveat (probe
-      placement) stands unchanged** — not re-touched this round.
+- [x] Applied the combined method to **MS14, MS21, MS23, MS25, MS24_CTAtoExt**
+      (MS25 despite already having a real automatic threshold — Peleg wanted
+      consistency). Result is a real, usable fix for MS23 (REM 6.3%, in
+      range, passes every check); for MS14/MS21/MS25/MS24_CTAtoExt it leaves
+      REM quantitatively flagged low/fragmented, which Peleg explicitly
+      accepted anyway over the alternatives ("REM doesn't have to be high").
+      **MS09/MS11's pre-existing sparse-REM caveat (probe placement) stands
+      unchanged** — not re-touched this round.
 - [x] All finalized rats' hypnogram+spectrogram+distribution plots
       (`MS_buzcode_analysis.py` output) synced to each rat's own
       `Z:\Peleg\<rat>\<rat>_buzcode_analysis\` (or `<segment>_buzcode_
@@ -289,41 +290,98 @@ extended with an entry per rat, not copied) on every rat with raw data ready:
       Peleg needs (1.7 09:00 → 2.7 ~01:07) is covered by `MS24_CTAtoExt`
       except the first 57 min (1.7 09:00–09:57, a real gap, in neither
       segment).
+- [x] **MS24_CTAtoExt finalized 2026-10-06** — its search-found channel 254
+      (mean+1SD+video-corr) had given REM=0.4% *and* a worse taste-alignment
+      flag (88.2%) than every other rat. Switched to channel 65 (the same
+      channel that gives a real threshold for MS24_hab3toExt): full rescore,
+      then mean+1SD(0.4826)+video-corr. Final: REM 2.8% (flagged low, Peleg
+      accepted), taste-in-WAKE 87.7% (still flagged). 49 hourly hypnograms
+      regenerated and synced to `Z:\Peleg\MS24\MS24_CTAtoExt_buzcode_
+      analysis\`.
+- [x] **Taste-alignment flag (82–88% in WAKE) investigated and ruled out as
+      a clock/timing bug, 2026-10-06** — `ct_offsets.txt` is all-zero (clean
+      single gate) and `TPrime.log` shows one normal, error-free invocation;
+      depth-into-sleep check on the "wrong-state" events shows none deep in
+      sleep (max ~200s from nearest WAKE, most <60s) — not the narrow,
+      uniform pattern a fixed clock offset would produce. Matches Mai's
+      `track.txt`-documented IOC-manifold liquid-leakage problem specific to
+      MS24 (one 4-event cluster lines up with it exactly). Conclusion: real
+      behavior/delivery noise, not a timestamp bug — no further action.
+
+- [x] **MS15, MS18, MS20 fixed 2026-10-06** — all three Control/Familiar-group
+      rats had shown a severe WAKE-collapse (WAKE ~8-17%, REM ~35-43%),
+      confirmed regardless of theta channel tried. Turned out to be the
+      **same single root cause** as the THthresh=0 bug elsewhere, not a
+      separate motion-threshold bug: with THthresh=0, buzcode's `hightheta`
+      is true for ~100% of samples, which makes WAKE depend entirely on the
+      motion-threshold split — and these three rats' auto motion threshold
+      happened to be very strict (only 7-14% of time counted as "moving"),
+      so WAKE collapsed to near-nothing and everything else fell into REM.
+      Applying the standard mean+1SD theta-threshold fix alone (no separate
+      motion fix needed) immediately restored normal WAKE/NREM proportions
+      for all three:
+      | Rat | WAKE | NREM | REM | taste-in-WAKE |
+      |---|---|---|---|---|
+      | MS15 | 47.0% | 44.5% | 2.3% | 95.4% |
+      | MS18 | 45.9% | 43.3% | 7.9% | 95.2% |
+      | MS20 | 46.1% | 45.9% | 6.6% | 70.1% (flagged, see below) |
+      MS18's result needed no video-correction at all (REM already
+      video-quiescent) — the cleanest result of the whole effort besides
+      MS23. MS20's taste-alignment flag was investigated the same way as
+      MS24_CTAtoExt's (depth-into-sleep check on the "wrong-state" events):
+      median 11s from nearest WAKE, 92% within 60s, none deep in sleep —
+      real short arousals around feeding, not a clock bug.
+- [x] **`video_correct_rem.py` applied to every rat with video, 2026-10-06**
+      — not just the 8 rats that needed the theta-threshold fix, but also
+      MS08, MS09, MS11, MS22, MS24_hab3toExt (which already had a genuine
+      automatic threshold), for consistency across the whole cohort per
+      Peleg's instruction. MS11's `VideoMovement.npy` turned out to exist on
+      the NAS after all (copied in the Sep data-collection effort, stale
+      "missing" comment removed) and was wired in; MS15 remains the sole
+      rat with no video at all (confirmed by Mai), so it only has the
+      theta-threshold fix, EMG-only plausibility check.
+- [x] **All 13 rat-sessions' hypnograms regenerated from final states and
+      synced to `Z:\Peleg`, 2026-10-06** — `MS_buzcode_analysis.py` extended
+      with a `mov_file=None` path (skips the video panel, shows a
+      placeholder) so it can run on MS15 too. Batch job run as one
+      `nohup`+`disown` shell loop over all 12 just-corrected animals
+      (MS24_CTAtoExt was already current from earlier the same day);
+      survived a mid-run Claude Code session restart with no data loss,
+      confirmed via the log's `ALL DONE` marker and zero errors/warnings
+      across all 12.
 
 Still open from this effort:
 
-- [ ] **MS24_CTAtoExt not yet finalized** — its search-found channel 254
-      (mean+1SD+video-corr) gave REM=0.4% *and* a new taste-alignment flag
-      (88.2%, worse than every other rat) — something more than just REM
-      looked off. Currently re-running with channel 65 instead (the same
-      channel that gave a real threshold for MS24_hab3toExt). Once done:
-      sanity-check, decide if ch65 is better, apply mean+1SD+video-corr on
-      top if still needed, regenerate hypnograms. **This is the segment
-      Peleg actually needs**, so worth getting right rather than just
-      accepting the first attempt.
-- [ ] **MS15, MS18, MS20 untouched** — all three Control/Familiar-group rats
-      show a severe WAKE-collapse failure (WAKE drops to ~8-17%, REM
-      inflates to ~35-43%), confirmed regardless of theta channel tried.
-      Paused by Peleg's own explicit call back when this was found — never
-      applied the mean+1SD/video-correction method to these yet. Next big
-      piece of unstarted work.
 - [ ] A recurring gvfs-SMB mount bug left stuck `??????????` ghost file/
       folder entries several times while overwriting a `<rat>_buzcode_
       analysis` folder in place (MS14, MS21, MS23, MS25) — not fixable from
       this machine, needs Peleg to delete from a Windows client (sometimes
       with a cache-clear delay after). Mitigation: write new output to a
       differently-named temp folder first, verify it, then swap names —
-      don't `rm -rf` + `mkdir` + `cp` directly in place.
+      don't `rm -rf` + `mkdir` + `cp` directly in place. **Still recurring**
+      as of 2026-10-11 (hit twice more on `total_sleep_rat.py`'s output,
+      both times on a filename being overwritten a 2nd time in-session).
+- [x] **Fixed `Z:\Peleg\<rat>\<rat>_Buzaki_results\` staleness for MS14,
+      MS21, MS22, MS23, MS24_CTAtoExt, MS25, 2026-10-11** — found 2026-10-08
+      while fixing MS15/18/20's *empty* `Buzaki_results` folders: these six
+      held an older `SleepState.states.mat` from before the mean+1SD/video-
+      correction fix (matched the original automatic-threshold file's size
+      exactly on `diskh2`), not each rat's current final scoring. Only
+      `<rat>_buzcode_analysis\` (the plots) had gotten the final version
+      synced on 2026-10-06 — the underlying `.mat` data never did. Synced
+      each rat's final `SleepState.states.mat` (from its `_manualTH`/
+      `_videocorr` folder, renamed to drop the variant suffix) plus the 4
+      unchanged companion files (`EMGFromLFP.LFP.mat`, `sessionInfo.mat`,
+      `SleepScoreLFP.LFP.mat`, `.xml`) from each rat's original basePath
+      folder — all 30 files verified byte-identical by size. Each folder's
+      pre-existing `SleepStateEpisodes.states.mat` is now stale (no
+      regenerated episode-level table exists to replace it with, same as
+      MS15/18/20) and was intentionally left in place — a file-removal
+      safety check blocked deleting it from this session; Peleg can delete
+      it manually if desired.
 
 ## Ready to start
 
-- [ ] **Sleep-architecture comparison across the 3 days** — quantify WAKE/NREM/REM
-      proportions, bout durations, and transition structure for baseline vs.
-      CTA-day vs. extinction-day using existing buzcode output. No spike sorting
-      needed; usable immediately for all animals with sleep scoring done.
-      - Watch out for the LiCl-induced REM suppression documented in
-        Venkatakrishna-Bhatt & Bureš 1978 (~3h post-injection) — don't treat the
-        first few hours after LiCl as a clean "post-CTA sleep" baseline.
 - [ ] **GC unit analysis within the CTA day** — align spike-sorted GC units to
       (a) taste delivery events and (b) sleep state (WAKE/NREM/REM, and ideally
       UP/DOWN within NREM), comparing before vs. after the LiCl injection moment
@@ -332,13 +390,6 @@ Still open from this effort:
       postconsolidation) so results are directly comparable to that paper, and
       separate early-epoch (identity) vs. late-epoch (palatability) responses
       rather than pooling the whole post-taste window.
-- [ ] **Sleep vs. consolidation-phase ensemble quickening** — the sharpest current
-      version of the hypothesis (see README Core hypothesis): Arieli et al. (2022)
-      found GC ensemble-state dynamics quicken specifically during the 6–12h
-      consolidation phase, hours after CTA induction. Test whether REM/NREM amount
-      or timing in the intervening hours predicts the size or timing of that
-      quickening (and of the late-epoch response-magnitude changes) on the CTA day.
-      Needs: sleep-state timeline + GC units, both already available for the CTA day.
 - [x] ~~Generalize `MS_buzcode_analysis.py`~~ — done: it now takes an
       `ANIMAL` argument and reads all paths/channel numbers/LiCl time from an
       `ANIMALS` config dict (MS08, MS09, MS11). Not one-copy-per-animal.
@@ -606,3 +657,179 @@ Still open from this effort:
       "Data inventory — all rats" above); excluded and deleted MS16/MS19;
       moved the shared registration atlas to `Z:\Peleg\Atlas\` and fixed the
       MS21 viewer.
+- [x] **Extended Training-day extraction + sleep_char.py to all 13 scored
+      rat-sessions, 2026-10-08** — `training_day_sleep_state_extraction.py`
+      and `sleep_char.py` had only ever run for MS08/09/11; ran both for the
+      9 remaining rats (MS14, MS15, MS18, MS20, MS21, MS22, MS23,
+      MS24_CTAtoExt, MS25), each using whichever `ANIMALS` key actually holds
+      that rat's *final* accepted scoring (the plain key for MS08/09/11, the
+      `_videocorr`/`_manualTH` variant key for the rest — confirmed against
+      `diskh2` file mtimes, not assumed). `MS24_hab3toExt` excluded on
+      purpose (no LiCl event in that segment). Found and fixed a real naming
+      bug this surfaced: saving/looking up the cut `.mat` by the variant key
+      or its `session` string (e.g. `MS14_hab3toExt_manualTH_videocorr`)
+      would have scattered output under inconsistent filenames — added
+      `plain_label()` to `MS_buzcode_analysis.py` (strips `_manualTH`/
+      `_videocorr` suffixes) and used it for both the `<animal>_Training_Day`
+      folder name and the saved `.mat` filename, so lookups stay consistent
+      regardless of which key generated the file.
+- [x] **Found MS15/MS18/MS20's `Z:\Peleg\<rat>\<rat>_Buzaki_results\` were
+      completely empty, 2026-10-08** — the per-rat template folder existed
+      (scaffolded 2026-09-23) but was never actually filled in with the
+      scored `.mat` files, unlike every other rat. Synced each rat's final
+      `SleepState.states.mat` (from its `_manualTH`/`_manualTH_videocorr`
+      folder, renamed to drop the variant suffix) plus the 4 unchanged
+      companion files (`EMGFromLFP.LFP.mat`, `sessionInfo.mat`,
+      `SleepScoreLFP.LFP.mat`, `.xml`) from the original basePath folder —
+      verified byte-identical by size. (The same staleness check on
+      MS14/21/22/23/24_CTAtoExt/25 — whose `Buzaki_results` held an older
+      pre-fix scoring, not empty but outdated — was fixed 2026-10-11, see
+      below.)
+- [x] **Investigated and fixed buzcode's "undefined" (state=0) gaps,
+      2026-10-08** — found every one of the 13 rat-sessions has some
+      undefined samples in its Training-day window (0.8%-6.3%), not an
+      isolated issue. Checked the state immediately before/after every gap
+      on MS08's full recording: **~80% are flanked by the identical real
+      state on both sides** (e.g. NREM-undefined-NREM, median gap 15s) — a
+      brief metric wobble near a classification threshold, not a real state
+      change (confirmed: the gap's own SW-power values sit right at
+      buzcode's own `swthresh`). The remaining ~20% genuinely span a
+      WAKE/NREM/REM transition. Built `fill_same_state_gaps()` in
+      `training_day_sleep_state_extraction.py`: fills only the same-state
+      gaps (merges the surrounding state across them), leaves genuine-
+      transition gaps as undefined rather than guessing where exactly the
+      transition happened. Documented in the cut `.mat`'s own `note` field.
+      Re-ran the Training-day extraction **for all 13 rat-sessions**
+      (including re-doing MS08/09/11) with the fix, then re-ran `sleep_char.py`
+      on the corrected data for all of them — bout counts dropped
+      meaningfully where flicker had been artificially splitting real bouts
+      (e.g. MS08: 287 → 175 sleep bouts). Verified the fix actually applied
+      (zero same-state-flanked gaps remaining) across all 13 post-fix files.
+- [x] **Added per-hour hypnogram plots to `sleep_char.py`, 2026-10-08** —
+      24 separate PNGs per rat (`<animal>_hourly_hypnogram_01.png` ..
+      `_24.png`, one per round hour of the Training day), styled like
+      `MS_buzcode_analysis.py`'s own per-hour hypnogram panel (same
+      WAKE/NREM/REM colors, 10-min HH:MM ticks, taste-event + LiCl markers) —
+      reuses `load_taste_events`/`STATE_Y`/`STATE_COL`/`STATE_LBL` from the
+      other two scripts rather than redefining them. (A first version made
+      one combined 24-row grid image instead; Peleg asked for 24 separate
+      files matching `MS_buzcode_analysis.py`'s actual convention, so that
+      replaced it.) Run for all 13 rat-sessions, each `Z:\Peleg\<rat>\
+      <rat>_Training_Day\` now has 4 output files + up to 24 hourly PNGs
+      (18 for MS25, whose recording ends early).
+- [x] **Built `SleepAnalysis/total_sleep_rat.py`, 2026-10-11** — cross-rat
+      (not per-rat) cumulative-sleep comparison, all 12 rats on one figure,
+      time-aligned to each rat's own LiCl injection (hour 0 = injection,
+      not wall-clock) rather than the 9AM-anchored Training-day window the
+      other scripts use. Iterated through several rounds of Peleg's
+      feedback to reach the final design:
+      - `total_sleep_rat.png` — full-resolution cumulative curve, windowed
+        to 0-16h post-LiCl (not the full 24h), cumulative sum itself reset
+        to 0 at the injection moment (excludes pre-injection sleep, not
+        just scrolled off-screen). Bold black **Mean** line (all 12 rats
+        resampled onto a common per-minute grid, then averaged) + a
+        **Mean ± SD text box** (8.01h ± 0.56h, n=12) — a plain text/box
+        annotation, not a shaded SD band, per Peleg's explicit preference.
+      - `total_sleep_rat_hourly.png` — the same data sampled at round hour
+        marks only (0-16), Y-axis in **minutes** (not hours).
+      - `total_sleep_rat_hour_01.png` .. `_16.png` — 16 SEPARATE single-
+        hour-window plots. Each **resets to y=0 at the start of its own
+        hour** (an independent per-hour sleep amount, not a slice of the
+        running total) — Peleg's explicit choice over the alternative
+        (zooming into a slice of the real cumulative curve without
+        resetting). Each also gets its own bold Mean line + Mean±SD text
+        box (e.g. hour 8: 32.1 ± 11.2 min, n=12).
+      - Tried and then removed (Peleg: "not that important") a pooled
+        sleep-bout-duration histogram across all 12 rats.
+      Reuses the per-rat `ANIMALS` key list already established for the
+      other two scripts (`MS_buzcode_analysis.py`'s `plain_label`/
+      `copy_to_share_safely`/`NAS_PELEG`), not redefined. Output goes to a
+      new shared, not-per-rat folder: `Z:\Peleg\Cross_Rat_Sleep_Analysis\`.
+      Hit the known recurring gvfs-SMB stuck-file bug twice more during
+      this work (on `total_sleep_rat.png` and `total_sleep_rat_hour_01.png`,
+      each the *second* write to that filename in the session) — resolved
+      both times by asking Peleg to delete the stuck file from a Windows
+      client, consistent with the existing documented mitigation.
+- [x] **Investigated the pooled bout-histogram's spike of 1-second sleep
+      bouts (272 of them) before removing the plot, 2026-10-11** — found
+      **100% are REM** (zero NREM), almost all sandwiched exactly between
+      WAKE on both sides. Root cause: `video_correct_rem.py` reclassifies
+      individual REM *samples* to WAKE based on that instant's video
+      movement, not whole bouts — perforating a longer REM bout can leave
+      an isolated single-sample REM "island" between two newly-WAKE
+      neighbors. Matches the fragmentation effect already documented
+      2026-10-04 ("REM bouts fragment badly... shreds episodes into
+      fragments"), just its most extreme case. Confirms a clean pattern:
+      **zero 1-second bouts in MS08/MS09/MS11** (kept at their original
+      scoring, video-correction deliberately not applied, per the earlier
+      "intentionally not re-synced" decision) and **MS15** (no video at
+      all, so `video_correct_rem.py` could never run) — nonzero in all 8
+      other rats, which did get video-corrected. Not yet acted on (e.g. a
+      merge-short-WAKE-gaps-between-REM-bouts fix, analogous to
+      `fill_same_state_gaps`) — Peleg's call pending.
+- [x] **Built `SleepAnalysis/nearest_sleep_bout.py` and
+      `SleepAnalysis/sleep_between_taste_blocks.py`, 2026-10-11** (Peleg's
+      two requests):
+      - **`nearest_sleep_bout.py`** — give it a rat and a clock time
+        (`HH:MM`, resolved to whichever of the Training day's two calendar
+        dates matches since the window runs 9AM-9AM so every clock-of-day
+        is unambiguous; or a full `YYYY-MM-DD HH:MM[:SS]`), it reports the
+        nearest NREM or REM bout: its type, start/end, duration, and
+        whether the rat is already asleep at that exact moment. Re-derives
+        typed (NREM-only / REM-only, kept separate) bouts fresh from each
+        rat's gap-filled Training-day point states rather than reading the
+        saved `NREMstate`/`REMstate` interval tables, which predate
+        `fill_same_state_gaps` and would occasionally report a bout gap-
+        filling has since merged. Accepts a plain rat name (e.g. `MS14`),
+        resolved to its final-scoring `ANIMALS` key via the same mapping
+        `total_sleep_rat.py`'s `ANIMAL_KEYS` encodes. Tested against MS08
+        for a query inside a bout, before a bout, and after a bout, plus
+        bad-input handling (unknown rat, unparseable time) — all correct.
+      - **`sleep_between_taste_blocks.py`** — cross-rat comparison of sleep
+        in the 6 gaps between the Training day's 7 taste-delivery blocks
+        (gap i = block i's last tastant to block i+1's first). Reports
+        NREM/REM/total sleep time and % of each gap spent asleep (raw
+        minutes alone isn't comparable since gap length varies by rat and
+        by gap) to a CSV + grouped-bar PNG (minutes panel + %-of-gap panel),
+        saved to the shared `Z:\Peleg\Cross_Rat_Sleep_Analysis\` folder
+        alongside `total_sleep_rat.py`'s output. Ran successfully for all
+        12 rats.
+      - **Refactor enabling the second script without duplicating logic**:
+        block-boundary detection (`derive_training_blocks`, gap-detection
+        on raw taste-event timestamps anchored on `licl_time_s`) previously
+        lived only in `NeuralAnalysis/cluster_responsiveness.py`, which
+        requires the `np_analysis` conda env for `zetapy`/`statsmodels`/
+        `openpyxl` — importing it from a sleep-only script would have
+        forced that same heavy env on sleep analyses that don't need it.
+        Moved `derive_training_blocks` (+ its `GAP_THRESH` constant) into
+        `MS_buzcode_analysis.py` instead (reordered to
+        `(all_events, licl_time_s, sorted_min=-inf, sorted_max=inf)` so
+        sleep-only callers can omit the spike-coverage bounds entirely;
+        `cluster_responsiveness.py`'s one call site updated to match, still
+        passing real spike bounds). Verified `cluster_responsiveness.py`
+        still imports and resolves `derive_training_blocks` correctly from
+        the `np_analysis` env after the move.
+- [x] **Full downstream pipeline rerun for all 12 rats, 2026-10-11** — Peleg
+      asked to rerun `video_correct_rem.py`, `training_day_sleep_state_
+      extraction.py`, and `sleep_char.py` across the board so every rat
+      starts the next analysis phase from one consistent, freshly-verified
+      baseline (not a mix of outputs generated at different points across
+      this whole iterative effort). Ran as one sequential batch
+      (`peleg_env` conda env):
+      1. `video_correct_rem.py` on the 8 rats whose accepted final key
+         actually uses video correction (MS14, MS18, MS20, MS21, MS22,
+         MS23, MS24_CTAtoExt, MS25) — refreshes each rat's `_videocorr`
+         `.mat` on `diskh2`.
+      2. `training_day_sleep_state_extraction.py` for all 12 rats (their
+         accepted `ANIMALS` keys), re-cutting the Training day window and
+         re-applying `fill_same_state_gaps()`.
+      3. `sleep_char.py` for all 12 rats — bout-duration bins, hourly sleep
+         %, and the 24 per-hour hypnograms.
+      **MS08, MS09, MS11 deliberately excluded from step 1** (standing
+      decision: these three keep their ORIGINAL non-video-corrected scoring
+      as final — the `_videocorr` variant exists on `diskh2` but has never
+      been adopted) but still went through steps 2-3 on their plain key.
+      **MS15 excluded from step 1 too** — no video exists for this rat at
+      all. Zero failures across all 32 script invocations; verified by
+      hourly-hypnogram file counts in every rat's `Z:\Peleg\<rat>\<rat>_
+      Training_Day\` folder (24 each, 18 for MS25's shorter recording).
