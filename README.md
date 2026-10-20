@@ -102,6 +102,27 @@ other sorted window, until stated otherwise.
   t=88694.3-89292.2s), so it does have a real Training day; fixed and its
   sleep-side Training-day extraction (`Z:\Peleg\MS11\MS11_Training_Day\`) now
   exists to match MS08/MS09.
+- **All other study rats got the same minimal spike-sorted file set mirrored
+  too (2026-10-20)**: MS14, MS15, MS18, MS20, MS21, MS22, MS23, MS24 now each
+  have `Z:\Peleg\<animal>\<animal>_Spike_Sorted_Data\` alongside MS08/09/11.
+  Each rat has 1-3 sibling Kilosort output folders under its Training-day
+  session on `Z:\Mai\<rat>\`; the one actually mirrored is whichever carries
+  Mai's finalized-curation markers (`good_units.csv`/`good_units_info.json`/
+  `taste_events_full.json`/`analysis/`) — unambiguous for every one of these
+  8 rats. **MS21 quirk**: its chosen folder has no unprefixed
+  `cluster_group.tsv`, only an underscore-prefixed `_cluster_group.tsv` —
+  confirmed via that folder's own `good_units_info.json` that this is the
+  real curated file (not a stray backup), copied under the plain name for
+  consistency with every other rat's folder. Same per-unit-curation caution
+  as the MS09/MS11 note above applies cohort-wide, not just to those two.
+  **MS25 deliberately not mirrored yet**: it's the one rat where *two*
+  sibling Kilosort folders both carry the finalized-curation markers
+  (`kilosort3_0_inf_mai`, 49 good units vs. `kilosort4_1_23h_to_end_stock`,
+  129 good units) — Peleg is checking with Mai which is the real final one.
+  None of these 8 new rats are wired into `MS_buzcode_analysis.py`'s
+  `ANIMALS` dict yet (`spike_sorted_dir` is still only set for MS08/09/11) —
+  that's a separate follow-up if spike-level analysis should run on them via
+  that config.
 - **`NeuralAnalysis/cluster_responsiveness.py`** ports the PSTH/ZETA/ANOVA
   method above into a real, git-tracked script (previously ad-hoc scratch
   scripts). Built and run on MS08's 41 good units first: the two

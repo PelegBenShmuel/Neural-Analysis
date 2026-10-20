@@ -10,6 +10,15 @@ let status live only in chat.
       currently unavailable per Anan Moran. Unblocks: any within-unit
       before/after-CTA GC comparison. Re-check status periodically; this is the
       single biggest constraint on the project's scope right now.
+- [ ] **MS25: which Kilosort output is the real final one** — two sibling
+      folders on `Z:\Mai\MS25\MS25_hab3toExt_g0\` (`kilosort3_0_inf_mai`, 49
+      good units; `kilosort4_1_23h_to_end_stock`, 129 good units) both carry
+      Mai's finalized-curation markers (`good_units.csv`/
+      `good_units_info.json`/`taste_events_full.json`/`analysis/`), unlike
+      every other rat where exactly one sibling folder had them. Peleg is
+      asking Mai (2026-10-20). Once resolved, mirror the chosen one to
+      `Z:\Peleg\MS25\MS25_Spike_Sorted_Data\` the same way the other 11 rats
+      were done (see "Done" below).
 
 ## Data inventory & organization (MS08 / MS09 / MS11 only)
 
@@ -833,3 +842,33 @@ Still open from this effort:
       all. Zero failures across all 32 script invocations; verified by
       hourly-hypnogram file counts in every rat's `Z:\Peleg\<rat>\<rat>_
       Training_Day\` folder (24 each, 18 for MS25's shorter recording).
+- [x] **Mirrored minimal spike-sorted data for 8 more study rats, 2026-10-20** —
+      Peleg asked for the same `<rat>_Spike_Sorted_Data` folder (already on
+      MS08/MS09/MS11) on every rat's `Z:\Peleg\<rat>\`. Mirrored MS14, MS15,
+      MS18, MS20, MS21, MS22, MS23, MS24 from their Training-day Kilosort
+      output on `Z:\Mai\<rat>\...`: each rat has 1-3 sibling Kilosort
+      folders there, and exactly one per rat carried Mai's
+      finalized-curation markers (`good_units.csv`/`good_units_info.json`/
+      `taste_events_full.json`/`analysis/`) — MS14/MS15 →
+      `kilosort4_23_49h_mai`, MS18 → `kilosort3_23_50h_mai`, MS20 →
+      `kilosort4_26h_lowmem_23_49_mai`, MS21 →
+      `kilosort4_26h_lowmem_23_49`, MS22 → `kilosort3_23_49`, MS23 →
+      `kilosort3_0_end`, MS24 → `kilosort4_mai`. Copied the same minimal set
+      as MS08/09/11 (`spike_times.npy`, `spike_clusters.npy`, the
+      `cluster_*.tsv` label files, `good_units.csv`/`good_units_info.json`,
+      `blocks_by_day*.json`, the session's `*_tcat.imec0.ap.meta`) via a
+      hidden-temp-name + atomic-rename copy with a size-verify retry loop
+      (same pattern as `copy_to_share_safely()` in `MS_buzcode_analysis.py`,
+      reimplemented standalone to avoid that module's heavy deps). **MS21
+      quirk**: its chosen folder has no unprefixed `cluster_group.tsv` at
+      all, only an underscore-prefixed `_cluster_group.tsv` — confirmed via
+      its own `good_units_info.json` (`"labels_file": "_cluster_group.tsv"`)
+      that this is the real curated file, not a stray backup; copied it
+      under the plain name so every rat's folder stays the same format.
+      Verified by file count + byte-identical size vs. source for all 8
+      rats. Script used (`mirror_spike_sorted_data.py`) was scratchpad-only,
+      not committed — same one-off-copy-script convention as the original
+      MS08/09/11 mirrors. **MS25 deliberately skipped** — see "Blocked /
+      external" above. Not yet done as a follow-up: wiring
+      `spike_sorted_dir` into `MS_buzcode_analysis.py`'s `ANIMALS` dict for
+      these 8 rats (only MS08/09/11 have it set there today).
