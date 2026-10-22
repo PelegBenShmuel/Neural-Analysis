@@ -119,10 +119,34 @@ other sorted window, until stated otherwise.
   sibling Kilosort folders both carry the finalized-curation markers
   (`kilosort3_0_inf_mai`, 49 good units vs. `kilosort4_1_23h_to_end_stock`,
   129 good units) — Peleg is checking with Mai which is the real final one.
-  None of these 8 new rats are wired into `MS_buzcode_analysis.py`'s
-  `ANIMALS` dict yet (`spike_sorted_dir` is still only set for MS08/09/11) —
-  that's a separate follow-up if spike-level analysis should run on them via
-  that config.
+- **7 of those 8 new rats wired into `MS_buzcode_analysis.py`'s `ANIMALS`
+  dict (2026-10-20)**: MS14_videocorr, MS15_manualTH, MS18_videocorr,
+  MS20_videocorr, MS21_videocorr, MS22_videocorr, MS23_videocorr now have
+  `spike_sorted_dir` set (MS24 deliberately left out, see below; MS25 still
+  has no entry pending the folder-choice decision above). **Found and fixed
+  while wiring MS21**: its `cluster_group.tsv` uses a nonstandard header
+  (`cluster_id`/`KSLabel` instead of the normal Phy `cluster_id`/`group`) —
+  confirmed the values are the real curated labels (128 "good" rows exactly
+  matching `good_units.csv`), just an unusual export for this one rat;
+  `load_spike_sorted_data()` now falls back to `KSLabel` when `group` isn't
+  present.
+- **MS18 and MS22 have a real, unresolved spike-time-coverage problem —
+  excluded from all per-unit analysis until resolved.** Their chosen
+  Kilosort folder's `spike_times.npy` spans only `0`–`~90,000s`, while the
+  folder *name* (`23_50h`/`23_49h`) implies it should start at hour 23
+  (≈82,800s) like MS14/MS21's identically-named folders actually do. The
+  `.imec0.ap.meta`'s `firstSample` field looks like a candidate fix for
+  MS18 (adding ≈66,876s would make it cover the Training day) but not for
+  MS22 (same field gives only ≈478s — nowhere near enough) — this
+  inconsistency means it's not safe to apply blindly. Question sent to Mai
+  2026-10-21 asking how she handles the time base for segment-cut Kilosort
+  runs.
+- **MS24 excluded for a different reason: wrong recording segment sorted.**
+  Its chosen Kilosort folder (`kilosort4_mai`) belongs to the `hab3toExt`
+  recording (spans 0–66,722s), but the real Training day (with the LiCl
+  injection) is in the separate `CTAtoExt` recording — confirmed via
+  `licl_time_s` only being non-`None` there. Needs a fresh Kilosort run on
+  `CTAtoExt` to ever be included; not fixable from already-sorted data.
 - **`NeuralAnalysis/cluster_responsiveness.py`** ports the PSTH/ZETA/ANOVA
   method above into a real, git-tracked script (previously ad-hoc scratch
   scripts). Built and run on MS08's 41 good units first: the two
@@ -138,6 +162,76 @@ other sorted window, until stated otherwise.
   prune gets labeled "good" without MS08's apparent per-unit scrutiny, worth
   confirming with Mai/Anan before reading too much into per-unit results
   there.
+
+### "Neural changes" thread — per-rat single-neuron Analysis suite
+
+Separate, newer analysis thread (started 2026-10-12), explicitly scoped to
+**characterizing within-Training-day changes** (not the extinction day).
+Organized per Anan Moran's framework into three categories: **Rest
+(baseline firing rate)**, **Regularization** (ISI coefficient of
+variation — not yet built), **Oscillations** (see below). Five scripts in
+`NeuralAnalysis/`, each single-neuron-level by default (population-mean
+plots added alongside, never replacing the per-unit ones), writing to
+`Z:\Peleg\<rat>\Analysis\single neuron\<category>\` (renamed from
+`Response_Blocks` on 2026-10-21, then nested one level deeper under
+`single neuron\` the same day — leaves room for future non-single-neuron
+analyses, e.g. population-level, to live as siblings under `Analysis\`):
+
+- `training_day_response_phases.py` — per-cluster PSTH + ZETA/ANOVA/t-test
+  responsiveness; also writes `<rat>_response_blocks.csv`, a **prerequisite
+  dependency** for `taste_entropy.py` below (easy to miss — MS08/09/11
+  already had this file from earlier work, so the dependency was invisible
+  until a genuinely new rat hit `FileNotFoundError`).
+- `psth_by_block.py` (one run per taste: Water/Sucrose/Salt/Acid) →
+  `Taste_Based_PSTH\<Taste>_PSTH_per_unit\` — all 7 blocks overlaid per unit.
+- `psth_per_unit_per_block_alltastes.py` → `PSTH\Block<N>\` (renamed from
+  `Block_Analysis\` on 2026-10-22) — all 4 tastes overlaid per unit, per
+  block.
+- `taste_entropy.py` → `Entropy\` — taste-tuning breadth (Smith & Travers
+  1979 via Raymond et al. 2026).
+- `pre_block_baseline_fano_factor.py` → `Rest\Baseline Fano Factor\Pre_Block\`
+  — Fano factor of the 30min spontaneous (taste-free) window before each
+  block.
+- `rest_firing_rate.py` → `Rest\Rest_FR\` — mean firing rate of the 10min
+  window before each block (deliberately a shorter, different window than
+  the Fano one).
+
+(`Baseline Fano Factor\` and `Rest_FR\` were merged under one `Rest\`
+parent on 2026-10-21, since both belong to Anan's "Rest: Baseline Firing
+Rate" category.)
+
+All y-axes are labeled "spikes/second", not "Hz" (Hz implies periodicity,
+which isn't what's being measured here).
+
+**Status (2026-10-21): full suite completed, verified error-free, for 9
+rats** — MS08, MS09, MS11, MS14, MS15, MS20, MS21, MS23 (MS09/MS11 were
+mistakenly believed done earlier and actually got the suite for the first
+time on 2026-10-21; MS08 was separately missing just its `Preferred_Taste`
+output until the same day). **MS18, MS22, MS24, MS25 excluded** — see the
+spike-sorted-data notes above for why each one specifically.
+`preferred_taste_tracking.py` and its `Preferred_Taste\` output (all 9
+rats) were built, then **deleted the same day** — Peleg judged the
+analysis itself not useful, not a data/coverage problem.
+
+**Oscillations, in progress (not yet a committed script):** explored via
+one-off previews on MS08 (cluster 14) and MS11, not MS08-only. Two methods
+compared — a single-neuron spike-train autocorrelogram and a population
+(all good units pooled into one combined spike train) PSD via
+`scipy.signal.welch`, both on the same 10min pre-block REST window as
+`rest_firing_rate.py`. **Neither method found a clear, consistent
+oscillation peak** at any frequency in MS08 or MS11 (both show the
+expected broadband 1/f-like decay, no narrowband peak reproducible across
+blocks). Key methodological point worth remembering: pooling spikes across
+units *before* computing the PSD (not averaging each unit's own PSD
+afterward) is what makes this a genuine population-synchrony test — if
+neurons fire independently, pooling just raises the mean rate without
+creating new spectral structure; a real shared rhythm would show up as a
+peak in the pooled signal's PSD. A "connected" variant (one continuous PSD
+per inter-block interval, spanning the whole day rather than just the
+pre-block rest snippets) was also tried and showed the same lack of a
+clear peak. Not yet promoted to a saved script/share output — still
+exploratory, pending Peleg's decision on final method/window before
+building the real per-rat version.
 
 ## Animals & groups
 

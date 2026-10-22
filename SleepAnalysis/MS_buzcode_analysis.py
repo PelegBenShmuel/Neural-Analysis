@@ -20,6 +20,8 @@ before (see plot_full_hypnogram.py's notes).
 import sys
 import os
 import re
+import csv
+import glob
 import shutil
 import time
 from datetime import datetime, timedelta
@@ -92,6 +94,8 @@ ANIMALS = {
         lfp_ch    = 73,
         rec_start = datetime(2026, 5, 12, 9, 29, 0),
         licl_time_s = 88265.0 + 15 * 60,
+        # Mirrored 2026-10-20, see project_spike_sorted_data_mirror_2026_10 memory.
+        spike_sorted_dir = f'{NAS_PELEG}/MS23/MS23_Spike_Sorted_Data',
     ),
     'MS21_videocorr': dict(
         session   = 'MS21_hab3toExt_manualTH_videocorr',
@@ -109,6 +113,11 @@ ANIMALS = {
         lfp_ch    = 214,
         rec_start = datetime(2026, 3, 1, 9, 36, 13),
         licl_time_s = 90469 + 15 * 60,
+        # Mirrored 2026-10-20, see project_spike_sorted_data_mirror_2026_10 memory
+        # (that folder's cluster_group.tsv was copied from this rat's
+        # underscore-prefixed `_cluster_group.tsv` on Z:\Mai -- see that
+        # memory's "MS21 quirk" note).
+        spike_sorted_dir = f'{NAS_PELEG}/MS21/MS21_Spike_Sorted_Data',
     ),
     'MS14_videocorr': dict(
         session   = 'MS14_hab3toExt_manualTH_videocorr',
@@ -126,6 +135,10 @@ ANIMALS = {
         lfp_ch    = 65,
         rec_start = datetime(2025, 7, 22, 9, 34, 25),
         licl_time_s = 88116.5 + 15 * 60,
+        # Mirrored 2026-10-20 from Z:\Mai\MS14\MS14_hab3toExt_g0\kilosort4_23_49h_mai\,
+        # see project_spike_sorted_data_mirror_2026_10 memory. This is MS14's
+        # *accepted* sleep-scoring key (videocorr), so spike_sorted_dir goes here.
+        spike_sorted_dir = f'{NAS_PELEG}/MS14/MS14_Spike_Sorted_Data',
     ),
     'MS21_manualTH': dict(
         session   = 'MS21_hab3toExt_manualTH',
@@ -238,6 +251,8 @@ ANIMALS = {
         lfp_ch    = 65,
         rec_start = datetime(2026, 4, 21, 9, 29, 15),
         licl_time_s = 88248 + 15 * 60,
+        # Mirrored 2026-10-20, see project_spike_sorted_data_mirror_2026_10 memory.
+        spike_sorted_dir = f'{NAS_PELEG}/MS22/MS22_Spike_Sorted_Data',
     ),
     'MS23': dict(
         session   = 'MS23_hab3toExt',
@@ -516,6 +531,9 @@ ANIMALS = {
         # Block-detected 2026-10-06: clean canonical pattern, blk8 =
         # baseline-IOC (20 Suc:10:10:10) at rec 88215.9s. LiCl = blk8 start + 15min.
         licl_time_s = 88215.9 + 15 * 60,
+        # Mirrored 2026-10-20, see project_spike_sorted_data_mirror_2026_10 memory.
+        # MS15's accepted sleep-scoring key (no video exists for this rat).
+        spike_sorted_dir = f'{NAS_PELEG}/MS15/MS15_Spike_Sorted_Data',
     ),
     'MS18_videocorr': dict(
         session   = 'MS18_manualTH_videocorr',
@@ -535,6 +553,8 @@ ANIMALS = {
         # Block-detected 2026-10-06: clean canonical pattern, blk8 =
         # baseline-IOC (20 Suc:10:10:10) at rec 89281.6s. LiCl = blk8 start + 15min.
         licl_time_s = 89281.6 + 15 * 60,
+        # Mirrored 2026-10-20, see project_spike_sorted_data_mirror_2026_10 memory.
+        spike_sorted_dir = f'{NAS_PELEG}/MS18/MS18_Spike_Sorted_Data',
     ),
     'MS20_videocorr': dict(
         session   = 'MS20_manualTH_videocorr',
@@ -554,6 +574,8 @@ ANIMALS = {
         # Block-detected 2026-10-06: clean canonical pattern, blk8 =
         # baseline-IOC (20 Suc:10:10:10) at rec 86861.3s. LiCl = blk8 start + 15min.
         licl_time_s = 86861.3 + 15 * 60,
+        # Mirrored 2026-10-20, see project_spike_sorted_data_mirror_2026_10 memory.
+        spike_sorted_dir = f'{NAS_PELEG}/MS20/MS20_Spike_Sorted_Data',
     ),
 }
 
@@ -615,6 +637,41 @@ def derive_training_blocks(all_events, licl_time_s, sorted_min=-np.inf, sorted_m
                   f"almost certainly Day 5's 'Block 8'; deliberately excluded, Training day only)")
 
     return training_blocks
+
+
+def load_spike_sorted_data(cfg):
+    """Loads the minimal raw Kilosort/Phy output for one animal (spike_times.npy,
+    spike_clusters.npy, cluster_group.tsv's "good" units, the true AP-band
+    sample rate from *.imec0.ap.meta) plus its raw taste-event files -- the
+    shared starting point for any spike-level analysis. Moved here from
+    NeuralAnalysis/cluster_responsiveness.py, its original caller (2026-10-12),
+    for the same reason derive_training_blocks was moved above: so a
+    peleg_env-only script doesn't need cluster_responsiveness.py's zetapy/
+    statsmodels/openpyxl dependencies just to reuse this loader."""
+    spike_dir = cfg['spike_sorted_dir']
+    if spike_dir is None:
+        raise ValueError("This animal has no spike_sorted_dir configured (no Training day recorded).")
+
+    meta_files = glob.glob(f"{spike_dir}/*.imec0.ap.meta")
+    assert len(meta_files) == 1, f"expected exactly one .imec0.ap.meta in {spike_dir}, found {meta_files}"
+    meta_text = open(meta_files[0]).read()
+    sample_rate = float(re.search(r"imSampRate=([\d.]+)", meta_text).group(1))
+
+    spike_times_samples = np.load(f"{spike_dir}/spike_times.npy").flatten()
+    spike_clusters = np.load(f"{spike_dir}/spike_clusters.npy").flatten()
+
+    good_clusters = []
+    with open(f"{spike_dir}/cluster_group.tsv") as f:
+        reader = csv.DictReader(f, delimiter="\t")
+        label_col = "group" if "group" in reader.fieldnames else "KSLabel"
+        for row in reader:
+            if row[label_col] == "good":
+                good_clusters.append(int(row["cluster_id"]))
+
+    events_by_taste = {t: np.loadtxt(path) for t, path in cfg['taste_files'].items()}
+    all_events = np.sort(np.concatenate(list(events_by_taste.values())))
+
+    return spike_times_samples, spike_clusters, sample_rate, good_clusters, events_by_taste, all_events
 
 
 def plain_label(animal_key):

@@ -58,9 +58,7 @@ over the share -- see that function's docstring for why).
 """
 import sys
 import os
-import re
 import csv
-import glob
 import time
 import warnings
 
@@ -76,7 +74,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'SleepAnalysis'))
-from MS_buzcode_analysis import ANIMALS, TASTE_COLORS, copy_to_share_safely, derive_training_blocks
+from MS_buzcode_analysis import (ANIMALS, TASTE_COLORS, copy_to_share_safely,
+                                  derive_training_blocks, load_spike_sorted_data)
 
 # ── Analysis parameters ───────────────────────────────────────────────────────
 WINDOW = (-1.0, 2.5)       # seconds relative to taste delivery
@@ -90,32 +89,6 @@ BLOCK_COLORS = {  # for the xlsx background shading, one color per Training-day 
     1: "DCE6F1", 2: "E2EFDA", 3: "FFF2CC", 4: "FCE4D6",
     5: "E4DFEC", 6: "F8CBAD", 7: "D9D9D9",
 }
-
-
-# ── Data loading ───────────────────────────────────────────────────────────────
-def load_animal_data(cfg):
-    spike_dir = cfg['spike_sorted_dir']
-    if spike_dir is None:
-        raise ValueError("This animal has no spike_sorted_dir configured (no Training day recorded).")
-
-    meta_files = glob.glob(f"{spike_dir}/*.imec0.ap.meta")
-    assert len(meta_files) == 1, f"expected exactly one .imec0.ap.meta in {spike_dir}, found {meta_files}"
-    meta_text = open(meta_files[0]).read()
-    sample_rate = float(re.search(r"imSampRate=([\d.]+)", meta_text).group(1))
-
-    spike_times_samples = np.load(f"{spike_dir}/spike_times.npy").flatten()
-    spike_clusters = np.load(f"{spike_dir}/spike_clusters.npy").flatten()
-
-    good_clusters = []
-    with open(f"{spike_dir}/cluster_group.tsv") as f:
-        for row in csv.DictReader(f, delimiter="\t"):
-            if row["group"] == "good":
-                good_clusters.append(int(row["cluster_id"]))
-
-    events_by_taste = {t: np.loadtxt(path) for t, path in cfg['taste_files'].items()}
-    all_events = np.sort(np.concatenate(list(events_by_taste.values())))
-
-    return spike_times_samples, spike_clusters, sample_rate, good_clusters, events_by_taste, all_events
 
 
 # ── The two responsiveness tests ──────────────────────────────────────────────
@@ -313,7 +286,7 @@ def main():
     cfg = ANIMALS[animal]
 
     (spike_times_samples, spike_clusters, sample_rate, good_clusters,
-     events_by_taste, all_events) = load_animal_data(cfg)
+     events_by_taste, all_events) = load_spike_sorted_data(cfg)
     sorted_min = spike_times_samples.min() / sample_rate
     sorted_max = spike_times_samples.max() / sample_rate
     training_blocks = derive_training_blocks(all_events, cfg['licl_time_s'], sorted_min, sorted_max)
