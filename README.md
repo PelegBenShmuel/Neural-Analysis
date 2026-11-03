@@ -167,15 +167,71 @@ other sorted window, until stated otherwise.
 
 Separate, newer analysis thread (started 2026-10-12), explicitly scoped to
 **characterizing within-Training-day changes** (not the extinction day).
-Organized per Anan Moran's framework into three categories: **Rest
-(baseline firing rate)**, **Regularization** (ISI coefficient of
-variation — not yet built), **Oscillations** (see below). Five scripts in
-`NeuralAnalysis/`, each single-neuron-level by default (population-mean
-plots added alongside, never replacing the per-unit ones), writing to
-`Z:\Peleg\<rat>\Analysis\single neuron\<category>\` (renamed from
+Writes to `Z:\Peleg\<rat>\Analysis\single neuron\<category>\` (renamed from
 `Response_Blocks` on 2026-10-21, then nested one level deeper under
 `single neuron\` the same day — leaves room for future non-single-neuron
-analyses, e.g. population-level, to live as siblings under `Analysis\`):
+analyses, e.g. population-level, to live as siblings under `Analysis\`).
+
+**Anan Moran's "Rest" framework, per Peleg's meeting with him (clarified
+2026-11-03) — three criteria, each with its own script(s):**
+1. **Baseline Firing Rate** → `rest_firing_rate.py` (`Rest\Rest_FR\`)
+2. **Poisson/Burstiness** → `burstiness.py` (`Burstiness\`, Burst Index —
+   fraction of ISIs < 10ms) **and** `coefficient_of_variation.py`
+   (`Coefficient of Variation\`, CV = SD(ISI)/Mean(ISI) — CV=1 is the
+   Poisson reference; mechanically cleaner than Burst Index since it needs
+   no threshold/bin-width choice)
+3. **Variability** → `pre_block_baseline_fano_factor.py`
+   (`Rest\Baseline Fano Factor\Pre_Block\`, Fano = Var/Mean of 1s-binned
+   spike counts — Fano=1 is also the Poisson reference, but computed from
+   binned counts rather than ISIs directly)
+
+(A fourth category Anan originally mentioned, Oscillations, was explored
+2026-10-21 via PSD/autocorrelogram previews on MS08/MS11, found no clear
+peak, and was dropped from this thread's scope 2026-10-22 — not pursuing
+further.)
+
+**All four Rest-category scripts were rewritten 2026-11-03 to compare
+Block 1 vs Block 7 per unit** (replacing an earlier per-block-trend-across-
+all-7-blocks version) — Peleg's explicit request, after working through
+which statistical test is appropriate for each metric (**Mann-Whitney U**
+throughout: no normality assumption, validated empirically via Shapiro-Wilk
+showing 30-40% of units fail normality on these metrics, so a t-test would
+be unsafe as a default). Firing rate gets a free 600-sample distribution
+(each 1s bin's count is already a rate sample); Fano factor/Burst
+Index/CV are all ratios computed across many samples at once, so each 30min
+window is split into 10 non-overlapping 180s sub-windows to build a
+10-sample distribution for the test instead (much lower power than firing
+rate's n=600 test — a real trade-off, not a free choice). Each script
+outputs, per rat: one box plot per unit (Block 1 vs Block 7), a CSV, a
+population summary scatter (colored by increased/decreased/no-change), and
+a group-counts bar chart. Not yet extended past MS09.
+
+**Key finding from cross-checking the three "Poisson/Burstiness+Variability"
+metrics against each other (MS09, 2026-11-03):** Burst Index's own
+Block1-vs-Block7 result was dramatic and one-directional (109/224 units
+increased, only 13 decreased) — but this **did not replicate** with CV
+(a threshold-free alternative measure of the same concept: only 31
+increased, 27 decreased, 164 unchanged; Spearman correlation between the
+two metrics was essentially zero, rho=0.04, p=0.52). CV agreed much better
+with Fano factor (rho=0.47, p<0.001). **This strongly suggests the Burst
+Index finding is an artifact of its specific 10ms threshold, not a robust
+population effect** — flag this caveat before treating "burstiness
+increased" as an established result.
+
+**Pseudoreplication caveat for extending this suite past MS09 (raised by
+Peleg, 2026-11-03):** neurons from the same rat are not independent of each
+other (they share that animal's recording session, physiological state,
+etc.) — the rat, not the neuron, is the true unit of replication, since the
+Training-day/CTA manipulation was applied once per animal. **Do not pool
+all rats' neurons into one combined sample** when extending this analysis
+cohort-wide; either report per-rat (as done for MS09) or reduce each rat to
+one summary value first and compare across rats (n=8-12), or use a
+mixed-effects model with rat as a random effect.
+
+Four more scripts in `NeuralAnalysis/` make up the rest of this suite
+(taste/PSTH-based, not part of the Rest framework above), each
+single-neuron-level by default (population-mean plots added alongside,
+never replacing the per-unit ones):
 
 - `training_day_response_phases.py` — per-cluster PSTH + ZETA/ANOVA/t-test
   responsiveness; also writes `<rat>_response_blocks.csv`, a **prerequisite
@@ -189,22 +245,12 @@ analyses, e.g. population-level, to live as siblings under `Analysis\`):
   block.
 - `taste_entropy.py` → `Entropy\` — taste-tuning breadth (Smith & Travers
   1979 via Raymond et al. 2026).
-- `pre_block_baseline_fano_factor.py` → `Rest\Baseline Fano Factor\Pre_Block\`
-  — Fano factor of the 30min spontaneous (taste-free) window before each
-  block.
-- `rest_firing_rate.py` → `Rest\Rest_FR\` — mean firing rate of the 10min
-  window before each block (deliberately a shorter, different window than
-  the Fano one).
-
-(`Baseline Fano Factor\` and `Rest_FR\` were merged under one `Rest\`
-parent on 2026-10-21, since both belong to Anan's "Rest: Baseline Firing
-Rate" category.)
 
 All y-axes are labeled "spikes/second", not "Hz" (Hz implies periodicity,
 which isn't what's being measured here).
 
-**Status (2026-10-21): full suite completed, verified error-free, for 9
-rats** — MS08, MS09, MS11, MS14, MS15, MS20, MS21, MS23 (MS09/MS11 were
+**Status (2026-10-21): these four scripts completed, verified error-free,
+for 9 rats** — MS08, MS09, MS11, MS14, MS15, MS20, MS21, MS23 (MS09/MS11 were
 mistakenly believed done earlier and actually got the suite for the first
 time on 2026-10-21; MS08 was separately missing just its `Preferred_Taste`
 output until the same day). **MS18, MS22, MS24, MS25 excluded** — see the
@@ -212,26 +258,6 @@ spike-sorted-data notes above for why each one specifically.
 `preferred_taste_tracking.py` and its `Preferred_Taste\` output (all 9
 rats) were built, then **deleted the same day** — Peleg judged the
 analysis itself not useful, not a data/coverage problem.
-
-**Oscillations, in progress (not yet a committed script):** explored via
-one-off previews on MS08 (cluster 14) and MS11, not MS08-only. Two methods
-compared — a single-neuron spike-train autocorrelogram and a population
-(all good units pooled into one combined spike train) PSD via
-`scipy.signal.welch`, both on the same 10min pre-block REST window as
-`rest_firing_rate.py`. **Neither method found a clear, consistent
-oscillation peak** at any frequency in MS08 or MS11 (both show the
-expected broadband 1/f-like decay, no narrowband peak reproducible across
-blocks). Key methodological point worth remembering: pooling spikes across
-units *before* computing the PSD (not averaging each unit's own PSD
-afterward) is what makes this a genuine population-synchrony test — if
-neurons fire independently, pooling just raises the mean rate without
-creating new spectral structure; a real shared rhythm would show up as a
-peak in the pooled signal's PSD. A "connected" variant (one continuous PSD
-per inter-block interval, spanning the whole day rather than just the
-pre-block rest snippets) was also tried and showed the same lack of a
-clear peak. Not yet promoted to a saved script/share output — still
-exploratory, pending Peleg's decision on final method/window before
-building the real per-rat version.
 
 ## Animals & groups
 

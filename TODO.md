@@ -872,3 +872,73 @@ Still open from this effort:
       external" above. Not yet done as a follow-up: wiring
       `spike_sorted_dir` into `MS_buzcode_analysis.py`'s `ANIMALS` dict for
       these 8 rats (only MS08/09/11 have it set there today).
+- [x] **Rest-category scripts switched to Block1-vs-Block7 comparisons;
+      added CV of ISI as a 4th metric, 2026-11-03** — Peleg's explicit
+      request, after walking through test choice live (z-score vs SD/SEM,
+      why not a t-test, Mann-Whitney vs Student's/Welch's agreement
+      checked empirically). All on MS09 only so far (n=224 good units):
+      - **`rest_firing_rate.py`** rewritten: per-unit box plot (Block 1 vs
+        Block 7, 600 one-second-bin samples per side) + Mann-Whitney U +
+        population summary scatter + group-counts bar, replacing the old
+        7-block-trend-with-population-mean version. Result: 98 increased,
+        100 decreased, 26 no change.
+      - **`pre_block_baseline_fano_factor.py`** rewritten the same way.
+        Fano factor is a ratio (Var/Mean across many bins), not a per-bin
+        sample, so each 30min window is split into 10 non-overlapping
+        180s sub-windows to get a distribution for the test (n=10/side,
+        much lower power than firing rate's n=600). Result: 48 increased,
+        33 decreased, 143 no change.
+      - **`burstiness.py`** (Burst Index = fraction of ISIs < 10ms) given
+        the same treatment, same 180s-sub-window mechanics. This script
+        had been built ahead of an actual go-ahead on 2026-10-22 (Peleg
+        had only asked to open an empty folder) — now properly discussed
+        and redone. Result: **109 increased, 101 no change, only 13
+        decreased** — a much stronger, one-directional result than the
+        other metrics.
+      - **`coefficient_of_variation.py`** (new) — CV = SD(ISI)/Mean(ISI),
+        CV=1 is the Poisson reference, no bin-width/threshold choice
+        needed (cleaner than Fano/Burst Index in that sense). Same
+        180s-sub-window Mann-Whitney test. New NAS folder `Analysis\single
+        neuron\Coefficient of Variation\` (sibling to `Burstiness\`, not
+        nested under `Rest\`). Result: 31 increased, 27 decreased, 164 no
+        change.
+      - **Cross-checked CV against Fano factor and Burst Index**
+        (Spearman correlation + Block1-vs-Block7 verdict agreement, both
+        on Block 1 values): CV vs Fano factor agree reasonably well
+        (rho=0.47, p<0.001, 65% verdict agreement). **CV vs Burst Index
+        show essentially no relationship at all** (rho=0.04, p=0.52, only
+        39% verdict agreement). Since Burst Index's result was the
+        standout finding of the day, **this non-replication with a
+        threshold-free alternative measure is the single most important
+        takeaway** — strongly suggests that result is an artifact of the
+        specific 10ms cutoff, not a real population-wide effect.
+      - **Of the 18 units where CV and Fano both agreed on a significant
+        increase** (clusters 75, 108, 134, 154, 213, 239, 250, 291, 292,
+        293, 306, 317, 329, 382, 430, 432, 491, 516): checked whether the
+        ratio's numerator (variance/SD) or denominator (mean count/mean
+        ISI) actually drove the change. Only ~half (12/18 for variance,
+        11/18 for SD-of-ISI) show the numerator genuinely increasing — the
+        rest show the ratio rising mainly because firing dropped. Caveat
+        for any write-up: "FF/CV increased" doesn't reliably mean "more
+        variable," it can mean "fired less."
+      - **Peleg raised a pseudoreplication concern himself** (should
+        neurons from all rats eventually get pooled into one sample, since
+        the experiment ran on all of them?) — answered no: the rat is the
+        true independent unit, not the neuron. When this suite extends
+        past MS09, must either report per-rat, reduce each rat to one
+        summary value before comparing across rats (n=8-12), or use a
+        mixed-effects model with rat as a random effect. This governs how
+        the eventual all-rats extension (still not started) should be
+        analyzed, not just how it's run.
+      - **gvfs-SMB stuck-ghost-file bug hit 4 times across this session**
+        (on the Fano/Burstiness NAS syncs) — same known issue, cleared
+        each time with a retry after a short delay; one new wrinkle found:
+        a file already-deleted earlier in the SAME session can resurface
+        on a later `ls`, so always re-verify with a fresh listing after
+        any multi-file NAS operation, not just once.
+      - Full detail, exact numbers, and the complete per-unit/per-script
+        design rationale: see `project_neural_changes_training_day_2026_10`
+        memory. Peleg presenting this work to Anan Moran 2026-11-04;
+        expects follow-up questions. Not yet done: extend all four
+        Rest-category scripts to the other 7 rats with the suite (MS08,
+        MS11, MS14, MS15, MS20, MS21, MS23).
