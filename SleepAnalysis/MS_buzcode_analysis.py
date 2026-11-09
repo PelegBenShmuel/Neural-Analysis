@@ -118,6 +118,18 @@ ANIMALS = {
         # underscore-prefixed `_cluster_group.tsv` on Z:\Mai -- see that
         # memory's "MS21 quirk" note).
         spike_sorted_dir = f'{NAS_PELEG}/MS21/MS21_Spike_Sorted_Data',
+        # GC/S1 depth boundary -- NOT from electrode_track_boundaries_GC_somato.xlsx
+        # (no entry there yet), but from a lab-wide status dashboard Peleg
+        # confirmed is the most up-to-date source (2026-11-05, see
+        # reference_lab_dashboard_artifact memory): single "GC boundary"
+        # value 1300.0, marked "upper only" there. Interpreted as
+        # gc_upper_um with gc_lower_um=0 (no excluded/AIV zone for this
+        # rat), confirmed with Peleg 2026-11-05 ("everything below is GC").
+        # Caveat: this dashboard's numbers for rats we CAN cross-check
+        # (MS09/11/14/15/18) don't match our own confirmed gc_bounds_um at
+        # all -- different convention or processing stage, not verified
+        # against Mai's own file for MS21 specifically.
+        gc_bounds_um = (0, 1300.0),
     ),
     'MS14_videocorr': dict(
         session   = 'MS14_hab3toExt_manualTH_videocorr',
@@ -139,6 +151,10 @@ ANIMALS = {
         # see project_spike_sorted_data_mirror_2026_10 memory. This is MS14's
         # *accepted* sleep-scoring key (videocorr), so spike_sorted_dir goes here.
         spike_sorted_dir = f'{NAS_PELEG}/MS14/MS14_Spike_Sorted_Data',
+        # GC/S1 depth boundary (um from probe tip), from
+        # Z:\Mai\electrode_track_boundaries_GC_somato.xlsx -- see
+        # feedback_gc_s1_separation memory.
+        gc_bounds_um = (0, 1301),
     ),
     'MS21_manualTH': dict(
         session   = 'MS21_hab3toExt_manualTH',
@@ -253,6 +269,25 @@ ANIMALS = {
         licl_time_s = 88248 + 15 * 60,
         # Mirrored 2026-10-20, see project_spike_sorted_data_mirror_2026_10 memory.
         spike_sorted_dir = f'{NAS_PELEG}/MS22/MS22_Spike_Sorted_Data',
+        # spike_times.npy is 0-based from this tcat segment's own start, not
+        # the recording's true t=0 -- same bug family as MS18_videocorr
+        # above. CORRECTED 2026-11-05: previously thought unfixable for
+        # MS22 (this folder's own .ap.meta firstSample/imSampRate gives a
+        # negligible ~478.5s, nothing like MS18's offset, so that method
+        # genuinely doesn't generalize) -- but Mai/Alina's own
+        # `sessions.py` hardcodes spike_time_offset_s=23*3600 for this
+        # exact rat+sorter regardless, confirmed empirically (real spike
+        # counts, hundreds of thousands, now appear in every Block 1-7
+        # window). See reference_mai_sessions_py memory.
+        spike_time_offset_s = 23 * 3600,
+        # GC/S1 depth boundary from the lab-wide status dashboard (not
+        # electrode_track_boundaries_GC_somato.xlsx, no entry there yet) --
+        # see MS21_videocorr's comment above for the full interpretation
+        # note and caveat (reference_lab_dashboard_artifact memory,
+        # confirmed with Peleg 2026-11-05). Independently confirmed
+        # 2026-11-05 against Mai/Alina's own `config/gc_boundaries.csv`
+        # (gc_upper_um=1721.0 for MS22, exact match).
+        gc_bounds_um = (0, 1721.0),
     ),
     'MS23': dict(
         session   = 'MS23_hab3toExt',
@@ -332,6 +367,22 @@ ANIMALS = {
         # moment (corrects the earlier assumption that this segment has no
         # Training day at all). LiCl = blk1 start + 15min.
         licl_time_s = 1071.24 + 15 * 60,
+        # Spike-sorted data mirrored 2026-11-05 from Z:\Mai\MS24\MS24_CTAtoExt_g0\
+        # kilosort3_0_26\ -- the CORRECT sort, confirmed via Mai/Alina's own
+        # sessions.py (see reference_mai_sessions_py memory): the earlier
+        # Z:\Peleg\MS24\MS24_Spike_Sorted_Data\ mirror (2026-10-20) was from
+        # the WRONG segment (MS24_hab3toExt_g0, no real Training day) and has
+        # been overwritten with this one. 19 good units. No spike_time_offset_s
+        # needed -- this segment's spike_times.npy is already 0-based from its
+        # own true recording start (confirmed via its spike_seconds_info.json,
+        # offset_seconds_applied=0.0, min_spike_second~0).
+        spike_sorted_dir = f'{NAS_PELEG}/MS24/MS24_Spike_Sorted_Data',
+        # GC/S1 depth boundary -- PROVISIONAL (per Mai's own
+        # config/gc_boundaries.csv, provisional=True, "recount after
+        # preprocessing"). gc_upper_um=2600, lower_edge_um=750 (units below
+        # 750 excluded from both regions, not just GC -- unlike every other
+        # rat's gc_bounds_um=(0, upper) convention, see assign_regions()).
+        gc_bounds_um = (750, 2600.0),
     ),
     'MS24_CTAtoExt_videocorr': dict(
         session   = 'MS24_CTAtoExt_manualTH_videocorr',
@@ -368,6 +419,23 @@ ANIMALS = {
         # Block-detected 2026-10-02: clean canonical pattern, blk8 =
         # baseline-IOC (20 Suc:10:10:10) at rec 87724.1s.
         licl_time_s = 87724.1 + 15 * 60,
+        # Spike-sorted data mirrored 2026-11-05 from Z:\Mai\MS25\MS25_hab3toExt_g0\
+        # kilosort4_1_23h_to_end_stock\ -- the chosen sort of the two
+        # candidates (vs. kilosort3_0_inf_mai, 49 units): confirmed via
+        # Mai/Alina's own sessions.py (see reference_mai_sessions_py memory),
+        # which picks this one for its richer unit count (129 good units) and
+        # because its window starts at the same absolute hour-23 mark as
+        # every other rat's. No spike_time_offset_s needed -- this sort's
+        # spike_times.npy is already absolute-time 0-based (confirmed via its
+        # own spike_seconds_info.json: offset_seconds_applied=0.0,
+        # min_spike_second~82,802s = ~23h, matching the window directly).
+        spike_sorted_dir = f'{NAS_PELEG}/MS25/MS25_Spike_Sorted_Data',
+        # GC/S1 depth boundary -- PROVISIONAL (per Mai's own
+        # config/gc_boundaries.csv, provisional=True, "recount after
+        # preprocessing"). gc_upper_um=2500, lower_edge_um=750 (units below
+        # 750 excluded from both regions, not just GC -- unlike every other
+        # rat's gc_bounds_um=(0, upper) convention, see assign_regions()).
+        gc_bounds_um = (750, 2500.0),
     ),
     'MS11': dict(
         session   = 'MS11_hab3',
@@ -399,6 +467,10 @@ ANIMALS = {
         # Mirrored from Z:\Mai\MS11\MS11_hab3_g0\kilosort4_23_49h_mai\
         # 2026-09-22, same minimal file set as MS08/MS09.
         spike_sorted_dir = f'{NAS_PELEG}/MS11/MS11_Spike_Sorted_Data',
+        # GC/S1 depth boundary (um from probe tip), from
+        # Z:\Mai\electrode_track_boundaries_GC_somato.xlsx -- see
+        # feedback_gc_s1_separation memory.
+        gc_bounds_um = (744.139472507823, 1095.7532409476978),
     ),
     'MS11_videocorr': dict(
         session   = 'MS11_hab3_videocorr',
@@ -417,6 +489,7 @@ ANIMALS = {
         rec_start = datetime(2025, 5, 27, 9, 41, 49),
         licl_time_s = 89292.224696 + 5 * 60,
         spike_sorted_dir = f'{NAS_PELEG}/MS11/MS11_Spike_Sorted_Data',
+        gc_bounds_um = (744.139472507823, 1095.7532409476978),  # see 'MS11' entry above
     ),
     'MS08': dict(
         session   = 'MS08_hab3toExp',
@@ -494,6 +567,13 @@ ANIMALS = {
         # Same Kilosort4/Phy mirror pattern as MS08 -- see TODO.md "Mirrored the
         # same minimal spike-sorted data set for MS09" (2026-09-17).
         spike_sorted_dir = f'{NAS_PELEG}/MS09/MS09_Spike_Sorted_Data',
+        # GC/S1 depth boundary (um from probe tip, same convention as
+        # cluster_info.tsv's own `depth` column), from Mai's histology track
+        # reconstruction: Z:\Mai\electrode_track_boundaries_GC_somato.xlsx.
+        # Found and confirmed with Peleg 2026-11-04 -- see
+        # feedback_gc_s1_separation memory (standing rule from Anan Moran:
+        # always separate GC vs S1 populations, never pool them).
+        gc_bounds_um = (556, 1411),
     ),
     'MS09_videocorr': dict(
         session   = 'MS09_hab3_ext_videocorr',
@@ -512,6 +592,7 @@ ANIMALS = {
         rec_start = datetime(2025, 3, 18, 9, 20, 11),
         licl_time_s = 89388.7 + 5 * 60,
         spike_sorted_dir = f'{NAS_PELEG}/MS09/MS09_Spike_Sorted_Data',
+        gc_bounds_um = (556, 1411),  # see 'MS09' entry above
     ),
     'MS15_manualTH': dict(
         session   = 'MS15_manualTH',
@@ -534,6 +615,10 @@ ANIMALS = {
         # Mirrored 2026-10-20, see project_spike_sorted_data_mirror_2026_10 memory.
         # MS15's accepted sleep-scoring key (no video exists for this rat).
         spike_sorted_dir = f'{NAS_PELEG}/MS15/MS15_Spike_Sorted_Data',
+        # GC/S1 depth boundary (um from probe tip), from
+        # Z:\Mai\electrode_track_boundaries_GC_somato.xlsx -- see
+        # feedback_gc_s1_separation memory.
+        gc_bounds_um = (1232, 1759),
     ),
     'MS18_videocorr': dict(
         session   = 'MS18_manualTH_videocorr',
@@ -555,6 +640,23 @@ ANIMALS = {
         licl_time_s = 89281.6 + 15 * 60,
         # Mirrored 2026-10-20, see project_spike_sorted_data_mirror_2026_10 memory.
         spike_sorted_dir = f'{NAS_PELEG}/MS18/MS18_Spike_Sorted_Data',
+        # spike_times.npy is 0-based from this tcat segment's own start (the
+        # "23_50h" sorter name means it covers hours 23-50 of the absolute
+        # recording), not the recording's true t=0. CORRECTED 2026-11-05:
+        # the real value is exactly 23*3600s, found in Mai/Alina's own
+        # `mai_moranlab_package_repo/notebooks/sessions.py`
+        # (spike_time_offset_s=23*3600 for this exact rat+sorter) -- NOT the
+        # ~66,877s this project first guessed from this folder's own
+        # .ap.meta firstSample/imSampRate, which was close enough to look
+        # plausible (real spikes in every block window) but wrong. See
+        # reference_mai_sessions_py memory.
+        spike_time_offset_s = 23 * 3600,
+        # GC/S1 depth boundary (um from probe tip), from
+        # Z:\Mai\electrode_track_boundaries_GC_somato.xlsx -- see
+        # feedback_gc_s1_separation memory. Note: that file flags MS18's
+        # bregma value itself as unconfirmed (" לבדוק" = "to check"), but
+        # gc_lower_um/gc_upper_um are given as plain numbers, not flagged.
+        gc_bounds_um = (0, 1328),
     ),
     'MS20_videocorr': dict(
         session   = 'MS20_manualTH_videocorr',
@@ -576,6 +678,12 @@ ANIMALS = {
         licl_time_s = 86861.3 + 15 * 60,
         # Mirrored 2026-10-20, see project_spike_sorted_data_mirror_2026_10 memory.
         spike_sorted_dir = f'{NAS_PELEG}/MS20/MS20_Spike_Sorted_Data',
+        # GC/S1 depth boundary from the lab-wide status dashboard (not
+        # electrode_track_boundaries_GC_somato.xlsx, no entry there yet) --
+        # see MS21_videocorr's comment above for the full interpretation
+        # note and caveat (reference_lab_dashboard_artifact memory,
+        # confirmed with Peleg 2026-11-05).
+        gc_bounds_um = (0, 1517.0),
     ),
 }
 
@@ -658,6 +766,21 @@ def load_spike_sorted_data(cfg):
     sample_rate = float(re.search(r"imSampRate=([\d.]+)", meta_text).group(1))
 
     spike_times_samples = np.load(f"{spike_dir}/spike_times.npy").flatten()
+    # Some rats' sorted spike_times.npy is 0-based from the start of a tcat
+    # segment that itself begins partway into the absolute recording (not
+    # from the recording's true t=0) -- confirmed for MS18 (2026-11-05):
+    # its .ap.meta firstSample/imSampRate gives an offset of ~66,877s
+    # (~18.6h), three orders of magnitude bigger than every other rat's
+    # (all under ~200s, negligible) -- see spike_time_offset_s on MS18's
+    # ANIMALS entry for the full confirmation (matches the
+    # "blocks_by_day_23.0h-50.0h.json" filename AND Alina's independent
+    # claim that only Block 8 is missing from this sort, not Blocks 2-7).
+    # Don't assume this generalizes to any other rat with a similar symptom
+    # (MS22 looks the same on the surface but its own firstSample offset is
+    # tiny, like the working rats -- a real, different, unresolved gap).
+    offset_s = cfg.get('spike_time_offset_s', 0)
+    if offset_s:
+        spike_times_samples = spike_times_samples + offset_s * sample_rate
     spike_clusters = np.load(f"{spike_dir}/spike_clusters.npy").flatten()
 
     good_clusters = []
@@ -672,6 +795,54 @@ def load_spike_sorted_data(cfg):
     all_events = np.sort(np.concatenate(list(events_by_taste.values())))
 
     return spike_times_samples, spike_clusters, sample_rate, good_clusters, events_by_taste, all_events
+
+
+def assign_regions(good_clusters, cfg, label_undefined=False):
+    """Maps each good cluster to 'GC' or 'S1', per the standing rule from
+    Anan Moran (Peleg's meeting, 2026-11-04): single-neuron analyses must
+    always separate GC and S1 populations, never pool them -- see
+    feedback_gc_s1_separation memory.
+
+    Uses this animal's `gc_bounds_um` config value (gc_lower_um, gc_upper_um:
+    depth in um from the probe tip, from Mai's histology track
+    reconstruction, Z:\\Mai\\electrode_track_boundaries_GC_somato.xlsx)
+    against each cluster's own `depth` in cluster_info.tsv -- same
+    tip-referenced convention, confirmed against MS09's real depth range
+    (360-3840um, spanning the full probe) 2026-11-04. A cluster shallower
+    than gc_lower_um (ventral to GC -- the boundary file's "dist_tip_to_AIV"
+    column implies agranular insular cortex there, not GC or S1) is left out
+    of the returned map entirely, per Peleg's explicit call that day.
+
+    By default (label_undefined=False) returns {} for an animal with no
+    gc_bounds_um yet -- callers should treat that as "can't run this
+    analysis for this animal yet" and stop, not silently fall back to one
+    pooled population. With label_undefined=True, every cluster in
+    good_clusters gets an entry instead -- 'undefined' for a cluster
+    ventral to GC, or for every cluster if this animal has no gc_bounds_um
+    at all -- for cross-rat tables that want every unit labeled rather than
+    filtered (e.g. NeuralAnalysis/fano_factor_total.py's FanoFactorTotal.csv,
+    2026-11-04)."""
+    bounds = cfg.get('gc_bounds_um')
+    if not bounds:
+        return {cid: 'undefined' for cid in good_clusters} if label_undefined else {}
+    gc_lower, gc_upper = bounds
+
+    depths = {}
+    with open(f"{cfg['spike_sorted_dir']}/cluster_info.tsv") as f:
+        reader = csv.DictReader(f, delimiter="\t")
+        for row in reader:
+            if row["depth"] not in ("", None):
+                depths[int(row["cluster_id"])] = float(row["depth"])
+
+    regions = {}
+    for cid in good_clusters:
+        depth = depths.get(cid)
+        if depth is None or depth < gc_lower:
+            if label_undefined:
+                regions[cid] = 'undefined'
+            continue
+        regions[cid] = 'GC' if depth <= gc_upper else 'S1'
+    return regions
 
 
 def plain_label(animal_key):
@@ -737,6 +908,27 @@ def copy_to_share_safely(local_path, nas_dir):
     except FileExistsError:
         os.remove(dest)
         os.replace(tmp_dest, dest)
+
+
+def copy_tree_to_share_safely(local_root, nas_root):
+    """Like copy_to_share_safely, but walks local_root recursively, creating
+    matching subfolders under nas_root -- for scripts whose output is split
+    into GC/S1 subfolders (see assign_regions, feedback_gc_s1_separation
+    memory). Returns (n_copied, failed) where failed is a list of
+    (relative_path, error) tuples."""
+    copied = 0
+    failed = []
+    for dirpath, _dirnames, filenames in os.walk(local_root):
+        rel = os.path.relpath(dirpath, local_root)
+        dest_dir = nas_root if rel == '.' else os.path.join(nas_root, rel)
+        os.makedirs(dest_dir, exist_ok=True)
+        for fname in filenames:
+            try:
+                copy_to_share_safely(os.path.join(dirpath, fname), dest_dir)
+                copied += 1
+            except Exception as e:
+                failed.append((os.path.join(rel, fname), str(e)))
+    return copied, failed
 
 
 def main():

@@ -942,3 +942,87 @@ Still open from this effort:
         expects follow-up questions. Not yet done: extend all four
         Rest-category scripts to the other 7 rats with the suite (MS08,
         MS11, MS14, MS15, MS20, MS21, MS23).
+- [x] **Pivoted to a cross-rat Fano factor matrix, replacing the per-rat
+      Rest-category suite above** (2026-11-05 through 2026-11-08).
+  - Deleted the whole per-rat Rest/Burstiness/Entropy/Coefficient-of-
+    Variation folder structure across all 8 rats that had it, at Peleg's
+    explicit request, in favor of one simple cross-rat table/plot per
+    metric. Built `NeuralAnalysis/fano_factor_total.py`: Fano factor
+    (Var/Mean, 1s bins) in the 4min immediately before each of the 7
+    Training-day blocks, one row per unit, written to
+    `Z:\Peleg\CrossRatAnalysis\FanoFactorTotal.xlsx` with "Experiment"/
+    "Control" sheets (per README's Animals & groups table), each sorted by
+    rat then region (GC/S1/undefined) then cluster, with a bold gold
+    population-mean row under each (rat, region) group.
+  - **Found and fixed a real data bug along the way**: MS18 and MS22 both
+    appeared to have spike data for Training-day Block 1 only (blocks 2-7
+    looked empty). Root cause: both rats' `spike_times.npy` is 0-based from
+    their own sorted-segment start, not the recording's true t=0 — the
+    correct fix (`spike_time_offset_s=23*3600`, 23h) was found in Peleg's
+    labmate Alina's own copy of the lab's analysis package
+    (`Z:\Alina\mai_moranlab_package_repo\notebooks\sessions.py`), not
+    derivable reliably from the `.ap.meta` `firstSample` field (tried
+    first, wrong exact value, and didn't generalize to MS22 as assumed).
+    Fixed generically in `load_spike_sorted_data()`
+    (`SleepAnalysis/MS_buzcode_analysis.py`) via a new optional
+    `spike_time_offset_s` `ANIMALS` field. Verified empirically (real spike
+    counts appear in every block's window once applied) before trusting
+    it. MS18's Block 8 is still genuinely absent (confirmed via its own
+    nidq taste-event file — no event past ~38.6h at all — independently
+    corroborated by Alina).
+  - **Filled 3 of 5 missing `gc_bounds_um` gaps** (MS20, MS21, MS22) from a
+    lab-wide status dashboard Peleg confirmed is authoritative, later
+    independently corroborated against Mai/Alina's own
+    `config/gc_boundaries.csv` (exact number match) found in that same
+    Alina folder. MS08 and MS23 still have no boundary data anywhere and
+    were dropped from the matrix entirely (100% undefined otherwise).
+  - **Added MS24 and MS25** after resolving two previously-open questions
+    via Mai/Alina's `sessions.py`: MS24 uses the `MS24_CTAtoExt_g0`
+    recording (not `MS24_hab3toExt_g0`, which has no real Training day) with
+    sorter `kilosort3_0_26`; MS25 uses `kilosort4_1_23h_to_end_stock` (129
+    units, not the 49-unit alternative). Both mirrored to
+    `Z:\Peleg\<rat>\<rat>_Spike_Sorted_Data\` (replacing a wrong-segment
+    MS24 mirror from 2026-10-20) and added to `ANIMALS` with PROVISIONAL
+    `gc_bounds_um` (Mai's own file marks both `provisional=True`).
+  - **Final matrix: 10 rats** (MS09, MS11, MS14, MS15, MS18, MS20, MS21,
+    MS22, MS24, MS25), each with real per-block Fano data in at least one
+    region. 3 companion plots, all in `Z:\Peleg\CrossRatAnalysis\`:
+    `FanoFactor_GC_AllRats_Block1to7.png`, `FanoFactor_S1_AllRats_Block1to7.png`
+    (one line per rat, solid=Experimental/dashed=Control), and
+    `FanoFactor_PerRat_GCvsS1_Block1to7.png` (one small-multiples panel per
+    rat, GC vs S1).
+  - Full detail: see `project_cross_rat_fano_matrix_2026_11`,
+    `reference_mai_sessions_py`, `reference_lab_dashboard_artifact`, and
+    `project_spike_sorted_data_mirror_2026_10` memories.
+- [x] **New direction: sleep-state-aware Fano windowing** (2026-11-08,
+      same session). Idea: instead of a fixed pre-block window, pick a
+      5min sub-window (within the 30min before each block) that's actually
+      asleep, so Fano is compared across a consistent brain state rather
+      than whatever activity happens to precede the block.
+  - `NeuralAnalysis/sleep_before_block.py` — per rat, % time asleep
+    (NREM+REM) in the 30min before each block (reuses
+    `training_day_sleep_state_extraction.py`'s `load_states()`).
+  - `NeuralAnalysis/fano_in_sleep_window.py` — slides a 5min window across
+    that 30min period, picks the one with the highest sleep fraction
+    (keeps it only if ≥75% asleep by default), computes Fano there instead
+    of the fixed 4min window.
+  - `NeuralAnalysis/fano_window_compare.py` — one PNG per rat (GC + S1
+    subplots), fixed-4min vs. sleep-selected-5min lines side by side.
+    Block 1 (never has enough sleep to clear 75%) is still shown, not left
+    blank, using its best available window regardless of threshold
+    (flagged with a hollow marker + its actual sleep %) — Peleg's explicit
+    call. Each subplot also prints a paired Wilcoxon signed-rank result.
+    Run for all 10 rats; files in `Z:\Peleg\CrossRatAnalysis\`.
+  - `NeuralAnalysis/fano_sleep_window_to_xlsx.py` — adds the sleep-window
+    Fano values to `FanoFactorTotal.xlsx` as two more sheets, "Sleep
+    Experiment" / "Sleep Control" (same schema/formatting as the main two).
+  - `NeuralAnalysis/fano_window_wilcoxon.py` — the statistical test itself:
+    one paired Wilcoxon signed-rank test per rat × region (GC, S1) — not
+    per block — pooling every (unit, block) pair where both windows gave a
+    real Fano value. **Result across all 10 rats: 8/10 show a significant
+    (p<0.05), consistent direction** (fixed 4min window gives higher Fano
+    than the sleep-selected window). **MS11 (both regions) and MS24 (GC)
+    are the exceptions** — no significant difference. Saved as a new
+    "Window Compare Wilcoxon" sheet in `FanoFactorTotal.xlsx`.
+  - Full detail and the complete results table: see
+    `project_cross_rat_fano_matrix_2026_11` memory.
