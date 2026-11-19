@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'SleepAnalysis'))
 from MS_buzcode_analysis import NAS_PELEG, copy_to_share_safely
+from fano_factor_total import CROSS_RAT_FANO_DIR
 
 SHEET_GROUP = {'Experiment': 'Experiment', 'Control': 'Control'}
 
@@ -53,10 +54,21 @@ SECONDARY_INK = "#52514e"
 MUTED_INK = "#898781"
 GRIDLINE = "#e1e0d9"
 
+# Display-only exclusion (Anan Moran's request via Peleg, 2026-11-08/09):
+# a rat with very few units adds visual noise to a cross-rat comparison
+# plot without much statistical value -- rule of thumb is <=12 neurons.
+# This does NOT touch FanoFactorTotal.xlsx itself (every rat's real data
+# stays in the table) -- it only hides these rats from this plot's lines.
+# MS15 (GC n=2), MS22 (GC n=12, S1 n=7), MS24 (GC n=5, no S1 units) are
+# Peleg's explicit list, 2026-11-09 -- see project_anan_meeting_2026_11_08
+# memory. Revisit if a rat's unit count changes (e.g. MS24/MS25's
+# provisional gc_bounds_um gets finalized).
+EXCLUDED_FROM_DISPLAY = {'MS15', 'MS22', 'MS24'}
+
 
 def load_region_rows(region):
     """Returns {rat: {'group': ..., 'blocks': [[block1 vals], ..., [block7 vals]]}}."""
-    xlsx_path = f"{NAS_PELEG}/CrossRatAnalysis/FanoFactorTotal.xlsx"
+    xlsx_path = f"{CROSS_RAT_FANO_DIR}/FanoFactorTotal.xlsx"
     wb = openpyxl.load_workbook(xlsx_path, data_only=True)
     block_fields = [f"block{i}_fano" for i in range(1, 8)]
 
@@ -73,6 +85,8 @@ def load_region_rows(region):
             if r[idx['region']] != region:
                 continue
             rat = r[idx['rat']]
+            if rat in EXCLUDED_FROM_DISPLAY:
+                continue
             entry = by_rat.setdefault(rat, {'group': group, 'blocks': [[] for _ in range(7)]})
             for i, field in enumerate(block_fields):
                 val = r[idx[field]]
@@ -82,7 +96,11 @@ def load_region_rows(region):
 
 
 def main():
-    region = sys.argv[1] if len(sys.argv) > 1 else 'GC'
+    args = sys.argv[1:]
+    normalize = '--normalize' in args
+    args = [a for a in args if a != '--normalize']
+    region = args[0] if args else 'GC'
+
     by_rat = load_region_rows(region)
     if not by_rat:
         raise SystemExit(f"No units labeled '{region}' in any sheet of FanoFactorTotal.xlsx")
@@ -93,8 +111,11 @@ def main():
 
     fig, ax = plt.subplots(figsize=(8, 5.5))
     ax.set_facecolor(SURFACE)
+    ax.margins(x=0)
     for i in range(1, 7):
         ax.axvline(i + 0.5, color=GRIDLINE, linewidth=0.8, zorder=1)
+    if normalize:
+        ax.axhline(100, color=GRIDLINE, linewidth=1.2, linestyle='--', zorder=1)
 
     blocks_x = np.arange(1, 8)
     for color, rat in zip(RAT_COLORS, sorted(by_rat)):
@@ -102,6 +123,20 @@ def main():
         means = [np.mean(v) if v else np.nan for v in entry['blocks']]
         sems = [np.std(v, ddof=1) / np.sqrt(len(v)) if len(v) > 1 else 0 for v in entry['blocks']]
         n_units = max(len(v) for v in entry['blocks'])
+
+        if normalize:
+            # % of Block 1 (Anan Moran's request via Peleg, 2026-11-09): every
+            # rat's own Block 1 mean becomes 100%, so absolute-level
+            # differences between rats (e.g. MS25 ~5 vs MS11 ~1.7) don't hide
+            # the shape of each rat's own trend. SEM rescaled by the same
+            # factor so error bars stay proportional, not the raw-units size.
+            baseline = means[0]
+            if not baseline or np.isnan(baseline):
+                print(f"[SKIP] {rat}: no valid Block 1 mean to normalize against")
+                continue
+            means = [100 * m / baseline for m in means]
+            sems = [100 * s / baseline for s in sems]
+
         linestyle = '-' if entry['group'] == 'Experiment' else '--'
         label = f"{rat} ({'Exp' if entry['group'] == 'Experiment' else 'Ctrl'}, n={n_units})"
         ax.errorbar(blocks_x, means, yerr=sems, color=color, linestyle=linestyle,
@@ -109,8 +144,14 @@ def main():
 
     ax.set_xticks(blocks_x)
     ax.set_xlabel("Training-day block", fontsize=10.5, color=SECONDARY_INK)
-    ax.set_ylabel("Fano factor (Var/Mean, 1s bins, 4min pre-block)", fontsize=10.5, color=SECONDARY_INK)
-    ax.set_title(f"Fano factor across Training-day blocks \u2014 {region} population (mean \u00b1 SEM per rat)",
+    if normalize:
+        ax.set_ylabel("Fano factor (% of Block 1)", fontsize=10.5, color=SECONDARY_INK)
+        title_suffix = " \u2014 normalized to Block 1 = 100%"
+    else:
+        ax.set_ylabel("Fano factor (Var/Mean, 1s bins, 4min pre-block)", fontsize=10.5, color=SECONDARY_INK)
+        title_suffix = ""
+    ax.set_title(f"Fano factor across Training-day blocks \u2014 {region} population (mean \u00b1 SEM per rat)"
+                 f"{title_suffix}",
                  fontsize=12, color=PRIMARY_INK, pad=14, loc='left', fontweight='medium')
     ax.tick_params(colors=MUTED_INK)
     for spine in ('top', 'right'):
@@ -121,14 +162,14 @@ def main():
               bbox_to_anchor=(1.01, 1.0))
     fig.tight_layout()
 
-    local_path = f"/tmp/FanoFactor_{region}_AllRats_Block1to7.png"
+    suffix = "_Normalized" if normalize else ""
+    local_path = f"/tmp/FanoFactor_{region}_AllRats_Block1to7{suffix}.png"
     plt.savefig(local_path, dpi=150, facecolor=SURFACE, bbox_inches='tight')
     print(f"Wrote {local_path}")
 
-    nas_dir = f"{NAS_PELEG}/CrossRatAnalysis"
-    os.makedirs(nas_dir, exist_ok=True)
-    copy_to_share_safely(local_path, nas_dir)
-    print(f"Copied to {nas_dir}/")
+    os.makedirs(CROSS_RAT_FANO_DIR, exist_ok=True)
+    copy_to_share_safely(local_path, CROSS_RAT_FANO_DIR)
+    print(f"Copied to {CROSS_RAT_FANO_DIR}/")
 
 
 if __name__ == '__main__':

@@ -27,7 +27,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'SleepAnalysis'))
 from MS_buzcode_analysis import ANIMALS, NAS_PELEG, assign_regions, copy_to_share_safely, derive_training_blocks, load_spike_sorted_data
 from training_day_sleep_state_extraction import load_states
 from training_day_response_phases import label_blocks
-from fano_factor_total import PRE_BLOCK_SECONDS as FIXED_WINDOW_SECONDS, fano_of_window
+from fano_factor_total import CROSS_RAT_FANO_DIR, PRE_BLOCK_SECONDS as FIXED_WINDOW_SECONDS, fano_of_window
 from fano_in_sleep_window import SEARCH_WINDOW_SECONDS, SLEEP_CODES, SLEEP_FRACTION_THRESHOLD, find_best_sleep_window
 from sleep_before_block import RAT_KEYS
 
@@ -139,6 +139,7 @@ def plot_region(ax, region, data, rat, sleep_fracs, paired):
                                 fontsize=8.5, color=MUTED_INK)
 
     ax.set_facecolor(SURFACE)
+    ax.margins(x=0)
     for i in range(1, 7):
         ax.axvline(i + 0.5, color=GRIDLINE, linewidth=0.8, zorder=1)
     ax.set_xticks(blocks_x)
@@ -163,7 +164,7 @@ def main():
     if unknown:
         raise SystemExit(f"Unknown rat(s): {unknown}. Known rats: {list(RAT_KEYS.keys())}")
 
-    nas_dir = f"{NAS_PELEG}/CrossRatAnalysis"
+    nas_dir = CROSS_RAT_FANO_DIR
     os.makedirs(nas_dir, exist_ok=True)
 
     for rat in requested:
@@ -174,7 +175,10 @@ def main():
             print(f"[SKIP] {rat}: {type(e).__name__}: {e}")
             continue
 
-        fig, (ax_gc, ax_s1) = plt.subplots(1, 2, figsize=(13, 5.5), sharey=False)
+        # sharey=True (Peleg's request, 2026-11-09): GC and S1 panels use
+        # the same Y-axis scale so their magnitudes are directly
+        # comparable at a glance, not just their shapes.
+        fig, (ax_gc, ax_s1) = plt.subplots(1, 2, figsize=(13, 5.5), sharey=True)
         plot_region(ax_gc, 'GC', data['GC'], rat, sleep_fracs, paired)
         plot_region(ax_s1, 'S1', data['S1'], rat, sleep_fracs, paired)
         ax_gc.set_ylabel("Fano factor (Var/Mean, 1s bins)", fontsize=10.5, color=SECONDARY_INK)

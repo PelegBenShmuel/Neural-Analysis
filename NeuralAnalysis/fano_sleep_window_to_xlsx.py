@@ -25,7 +25,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'SleepAnalysis'))
 from MS_buzcode_analysis import ANIMALS, NAS_PELEG, assign_regions, copy_to_share_safely, derive_training_blocks, load_spike_sorted_data
 from training_day_sleep_state_extraction import load_states
 from training_day_response_phases import label_blocks
-from fano_factor_total import RAT_KEYS, SHEET_ORDER, fano_of_window, group_of, write_sheet
+from fano_factor_total import CROSS_RAT_FANO_DIR, RAT_KEYS, SHEET_ORDER, fano_of_window, group_of, write_sheet
 from fano_in_sleep_window import SEARCH_WINDOW_SECONDS, SLEEP_CODES, find_best_sleep_window
 
 FIELDNAMES = ["rat", "cluster", "region"] + [f"block{i}_fano" for i in range(1, 8)]
@@ -81,7 +81,7 @@ def main():
         print(f"{rat}: {len(rows)} units -> {counts}")
         sleep_rows.extend(rows)
 
-    xlsx_path = f"{NAS_PELEG}/CrossRatAnalysis/FanoFactorTotal.xlsx"
+    xlsx_path = f"{CROSS_RAT_FANO_DIR}/FanoFactorTotal.xlsx"
     wb_in = openpyxl.load_workbook(xlsx_path, data_only=True)
 
     existing_rows = {}
@@ -113,9 +113,9 @@ def main():
     wb.save(local_xlsx)
     print(f"Wrote {local_xlsx}")
 
-    nas_dir = f"{NAS_PELEG}/CrossRatAnalysis"
-    copy_to_share_safely(local_xlsx, nas_dir)
-    print(f"Copied to {nas_dir}/")
+    os.makedirs(CROSS_RAT_FANO_DIR, exist_ok=True)
+    copy_to_share_safely(local_xlsx, CROSS_RAT_FANO_DIR)
+    print(f"Copied to {CROSS_RAT_FANO_DIR}/")
 
 
 if __name__ == '__main__':

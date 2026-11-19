@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'SleepAnalysis'))
 from MS_buzcode_analysis import NAS_PELEG, copy_to_share_safely
 from plot_fano_block_trend import SHEET_GROUP, SURFACE, PRIMARY_INK, SECONDARY_INK, MUTED_INK, GRIDLINE
+from fano_factor_total import CROSS_RAT_FANO_DIR
 
 # dataviz-skill categorical palette slots 1-2: region is the fixed-identity
 # entity in this plot (same two colors in every subplot), unlike
@@ -39,7 +40,7 @@ RAT_ORDER = ['MS09', 'MS11', 'MS14', 'MS15', 'MS18', 'MS20', 'MS21', 'MS22', 'MS
 
 def load_all_rows():
     """{rat: {'group': ..., 'regions': {region: [[block1 vals], ..., [block7 vals]]}}}."""
-    xlsx_path = f"{NAS_PELEG}/CrossRatAnalysis/FanoFactorTotal.xlsx"
+    xlsx_path = f"{CROSS_RAT_FANO_DIR}/FanoFactorTotal.xlsx"
     wb = openpyxl.load_workbook(xlsx_path, data_only=True)
     block_fields = [f"block{i}_fano" for i in range(1, 8)]
 
@@ -77,6 +78,7 @@ def main():
 
     for ax, rat in zip(axes, RAT_ORDER):
         ax.set_facecolor(SURFACE)
+        ax.margins(x=0)
         entry = by_rat.get(rat)
         has_data = False
         if entry:
@@ -119,10 +121,9 @@ def main():
     plt.savefig(local_path, dpi=150, facecolor=SURFACE, bbox_inches='tight')
     print(f"Wrote {local_path}")
 
-    nas_dir = f"{NAS_PELEG}/CrossRatAnalysis"
-    os.makedirs(nas_dir, exist_ok=True)
-    copy_to_share_safely(local_path, nas_dir)
-    print(f"Copied to {nas_dir}/")
+    os.makedirs(CROSS_RAT_FANO_DIR, exist_ok=True)
+    copy_to_share_safely(local_path, CROSS_RAT_FANO_DIR)
+    print(f"Copied to {CROSS_RAT_FANO_DIR}/")
 
 
 if __name__ == '__main__':

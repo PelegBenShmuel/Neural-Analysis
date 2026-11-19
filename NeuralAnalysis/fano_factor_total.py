@@ -55,6 +55,13 @@ from training_day_response_phases import label_blocks
 PRE_BLOCK_SECONDS = 4 * 60    # 4 minutes
 BIN_WIDTH = 1.0               # s
 
+# Single source of truth for where every Fano-related output lives --
+# Peleg reorganized Z:\Peleg\CrossRatAnalysis\ into per-metric subfolders
+# 2026-11-09 ("Fano Factor", "Firing Rate", "Coefficient of Variation");
+# every other Fano script imports this rather than rebuilding the path
+# itself, so a future reorg only needs changing it here.
+CROSS_RAT_FANO_DIR = f"{NAS_PELEG}/CrossRatAnalysis/Fano Factor"
+
 # One ANIMALS key per physical rat -- each rat's *accepted* sleep-scoring
 # key, i.e. the one with spike_sorted_dir actually set (see MS_buzcode_
 # analysis.py's per-rat comments, e.g. "MS14's accepted sleep-scoring key").
@@ -216,10 +223,9 @@ def main():
     wb.save(local_xlsx)
     print(f"Wrote {local_xlsx}")
 
-    nas_dir = f"{NAS_PELEG}/CrossRatAnalysis"
-    os.makedirs(nas_dir, exist_ok=True)
-    copy_to_share_safely(local_xlsx, nas_dir)
-    print(f"Copied to {nas_dir}/")
+    os.makedirs(CROSS_RAT_FANO_DIR, exist_ok=True)
+    copy_to_share_safely(local_xlsx, CROSS_RAT_FANO_DIR)
+    print(f"Copied to {CROSS_RAT_FANO_DIR}/")
 
 
 if __name__ == '__main__':

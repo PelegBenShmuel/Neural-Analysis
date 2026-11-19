@@ -38,7 +38,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'SleepAnalysis'))
 from MS_buzcode_analysis import ANIMALS, NAS_PELEG, assign_regions, copy_to_share_safely, derive_training_blocks, load_spike_sorted_data
 from training_day_sleep_state_extraction import load_states
 from training_day_response_phases import label_blocks
-from fano_factor_total import fano_of_window
+from fano_factor_total import CROSS_RAT_FANO_DIR, fano_of_window
 from sleep_before_block import RAT_KEYS, PRE_BLOCK_SECONDS as SEARCH_WINDOW_SECONDS, SLEEP_CODES
 
 SLEEP_WINDOW_SECONDS = 5 * 60     # the window Fano is actually computed in
@@ -88,6 +88,7 @@ def main():
 
     fig, ax = plt.subplots(figsize=(8, 5.5))
     ax.set_facecolor(SURFACE)
+    ax.margins(x=0)
     for i in range(1, 7):
         ax.axvline(i + 0.5, color=GRIDLINE, linewidth=0.8, zorder=1)
     blocks_x = np.arange(1, 8)
@@ -155,10 +156,9 @@ def main():
     plt.savefig(local_path, dpi=150, facecolor=SURFACE, bbox_inches='tight')
     print(f"\nWrote {local_path}")
 
-    nas_dir = f"{NAS_PELEG}/CrossRatAnalysis"
-    os.makedirs(nas_dir, exist_ok=True)
-    copy_to_share_safely(local_path, nas_dir)
-    print(f"Copied to {nas_dir}/")
+    os.makedirs(CROSS_RAT_FANO_DIR, exist_ok=True)
+    copy_to_share_safely(local_path, CROSS_RAT_FANO_DIR)
+    print(f"Copied to {CROSS_RAT_FANO_DIR}/")
 
 
 if __name__ == '__main__':
